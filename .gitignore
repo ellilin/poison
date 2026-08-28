@@ -1,0 +1,22 @@
+# Third-party: fetched and patched by integration/setup.sh, not vendored here
+/BackdoorBox/
+
+# Data and regenerable artefacts
+/data/
+/results/datasets/
+/results/*.log
+/.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

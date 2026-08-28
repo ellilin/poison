@@ -1,0 +1,217 @@
+diff --git a/core/attacks/AdaptivePatch.py b/core/attacks/AdaptivePatch.py
+index 16c02bb..19d0d6f 100644
+--- a/core/attacks/AdaptivePatch.py
++++ b/core/attacks/AdaptivePatch.py
+@@ -192,6 +192,8 @@ class AddCIFAR10Trigger(AddTrigger):
+     def __call__(self, img):
+         img = F.pil_to_tensor(img)
+         img = self.add_trigger(img)
++        # add_trigger returns float32 (the blend uses fractional alphas); PIL needs uint8
++        img = img.clamp(0, 255).round().to(torch.uint8)
+         img = Image.fromarray(img.permute(1, 2, 0).numpy())
+         return img
+ 
+@@ -351,12 +353,15 @@ class PoisonedMNIST(MNIST):
+ 
+ 
+ class PoisonedCIFAR10(CIFAR10):
++    """CIFAR-10 version of PoisonedDatasetFolder (several patterns + cover samples)."""
++
+     def __init__(self,
+                  benign_dataset,
+                  y_target,
+                  poisoned_rate,
+-                 pattern,
+-                 weight,
++                 covered_rate,
++                 patterns,
++                 alphas,
+                  poisoned_transform_index,
+                  poisoned_target_transform_index):
+         super(PoisonedCIFAR10, self).__init__(
+@@ -368,16 +373,32 @@ class PoisonedCIFAR10(CIFAR10):
+         total_num = len(benign_dataset)
+         poisoned_num = int(total_num * poisoned_rate)
+         assert poisoned_num >= 0, 'poisoned_num should greater than or equal to zero.'
++        covered_num = int(total_num * covered_rate)
++        assert covered_num >= 0, 'covered_num should greater than or equal to zero.'
+         tmp_list = list(range(total_num))
+         random.shuffle(tmp_list)
+-        self.poisoned_set = frozenset(tmp_list[:poisoned_num])
++        self.poisoned_set = copy.deepcopy(tmp_list[:poisoned_num])
++        self.covered_set = copy.deepcopy(tmp_list[poisoned_num:poisoned_num + covered_num])
++        # O(1) lookups instead of list.index() on every __getitem__
++        self._poisoned_pos = {idx: i for i, idx in enumerate(self.poisoned_set)}
++        self._covered_pos = {idx: i for i, idx in enumerate(self.covered_set)}
+ 
+         # Add trigger to images
+         if self.transform is None:
+             self.poisoned_transform = Compose([])
+         else:
+             self.poisoned_transform = copy.deepcopy(self.transform)
+-        self.poisoned_transform.transforms.insert(poisoned_transform_index, AddCIFAR10Trigger(pattern, weight))
++        self.add_trigger_tranforms = []
++        for idx, pattern in enumerate(patterns):    # 'patterns' is a list of tensors
++            mask = torch.logical_or(torch.logical_or(pattern[0] > 0, pattern[1] > 0), pattern[2] > 0).float()
++            weight = mask * alphas[idx]
++            self.add_trigger_tranforms.append(AddCIFAR10Trigger(pattern, weight))
++
++        self.poisoned_transform_index = poisoned_transform_index
++        self.poisoned_rate = poisoned_rate
++        if poisoned_rate >= 1.0:        # Poison testset
++            for add_trigger_tranform in self.add_trigger_tranforms[:int(len(patterns) / 2)]:
++                self.poisoned_transform.transforms.insert(self.poisoned_transform_index, add_trigger_tranform)
+ 
+         # Modify labels
+         if self.target_transform is None:
+@@ -393,15 +414,29 @@ class PoisonedCIFAR10(CIFAR10):
+         # to return a PIL Image
+         img = Image.fromarray(img)
+ 
+-        if index in self.poisoned_set:
++        if self.poisoned_rate >= 1.0:       # Poison testset
+             img = self.poisoned_transform(img)
+             target = self.poisoned_target_transform(target)
+-        else:
+-            if self.transform is not None:
+-                img = self.transform(img)
+-
+-            if self.target_transform is not None:
+-                target = self.target_transform(target)
++        else:                               # Poison trainset
++            if index in self._poisoned_pos:
++                i = self._poisoned_pos[index] % len(self.add_trigger_tranforms)
++                poisoned_transform = copy.deepcopy(self.poisoned_transform)
++                poisoned_transform.transforms.insert(self.poisoned_transform_index, self.add_trigger_tranforms[i])
++                img = poisoned_transform(img)
++                target = self.poisoned_target_transform(target)
++            elif index in self._covered_pos:
++                i = self._covered_pos[index] % len(self.add_trigger_tranforms)
++                poisoned_transform = copy.deepcopy(self.poisoned_transform)
++                poisoned_transform.transforms.insert(self.poisoned_transform_index, self.add_trigger_tranforms[i])
++                img = poisoned_transform(img)
++                # Remain labels
++                if self.target_transform is not None:
++                    target = self.target_transform(target)
++            else:
++                if self.transform is not None:
++                    img = self.transform(img)
++                if self.target_transform is not None:
++                    target = self.target_transform(target)
+ 
+         return img, target
+ 
+@@ -410,10 +445,8 @@ def CreatePoisonedDataset(benign_dataset, y_target, poisoned_rate, covered_rate,
+     class_name = type(benign_dataset)
+     if class_name == DatasetFolder:
+         return PoisonedDatasetFolder(benign_dataset, y_target, poisoned_rate, covered_rate, patterns, alphas, poisoned_transform_index, poisoned_target_transform_index)
+-    # elif class_name == MNIST:
+-    #     return PoisonedMNIST(benign_dataset, y_target, poisoned_rate, pattern, weight, poisoned_transform_index, poisoned_target_transform_index)
+-    # elif class_name == CIFAR10:
+-    #     return PoisonedCIFAR10(benign_dataset, y_target, poisoned_rate, pattern, weight, poisoned_transform_index, poisoned_target_transform_index)
++    elif class_name == CIFAR10:
++        return PoisonedCIFAR10(benign_dataset, y_target, poisoned_rate, covered_rate, patterns, alphas, poisoned_transform_index, poisoned_target_transform_index)
+     else:
+         raise NotImplementedError
+ 
+diff --git a/core/attacks/Refool.py b/core/attacks/Refool.py
+index 4c2046a..00803ac 100644
+--- a/core/attacks/Refool.py
++++ b/core/attacks/Refool.py
+@@ -98,9 +98,9 @@ class AddTriggerMixin(object):
+ 
+             # generate the blended image with ghost effect
+             offset = (self.offset_xs[index],self.offset_ys[index])
+-            r_1 = np.lib.pad(r, ((0, offset[0]), (0, offset[1]), (0, 0)),
++            r_1 = np.pad(r, ((0, offset[0]), (0, offset[1]), (0, 0)),
+                          'constant', constant_values=0)
+-            r_2 = np.lib.pad(r, ((offset[0], 0), (offset[1], 0), (0, 0)),
++            r_2 = np.pad(r, ((offset[0], 0), (offset[1], 0), (0, 0)),
+                          'constant', constant_values=(0, 0))
+             ghost_alpha = self.ghost_alpha
+             if ghost_alpha < 0:
+diff --git a/core/attacks/TUAP.py b/core/attacks/TUAP.py
+index 1ee253f..dabf899 100644
+--- a/core/attacks/TUAP.py
++++ b/core/attacks/TUAP.py
+@@ -15,7 +15,17 @@ from torchvision.transforms import Compose
+ import torchvision.transforms as transforms
+ import numpy as np
+ import copy
+-from torch.autograd.gradcheck import zero_gradients
++try:
++    from torch.autograd.gradcheck import zero_gradients
++except ImportError:  # removed in torch >= 1.9
++    def zero_gradients(x):
++        if isinstance(x, torch.Tensor):
++            if x.grad is not None:
++                x.grad.detach_()
++                x.grad.zero_()
++        elif hasattr(x, '__iter__'):
++            for elem in x:
++                zero_gradients(elem)
+ import torchvision
+ 
+ import torch
+diff --git a/core/attacks/__init__.py b/core/attacks/__init__.py
+index fb30636..d6c52bd 100644
+--- a/core/attacks/__init__.py
++++ b/core/attacks/__init__.py
+@@ -13,8 +13,15 @@ from .TUAP import TUAP
+ from .SleeperAgent import SleeperAgent
+ from .BATT import BATT
+ from .AdaptivePatch import AdaptivePatch
+-from .BAAT import BAAT
+ 
+ __all__ = [
+-    'BadNets', 'Blended','Refool', 'WaNet', 'LabelConsistent', 'Blind', 'IAD', 'LIRA', 'PhysicalBA', 'ISSBA','TUAP', 'SleeperAgent','BATT', 'AdaptivePatch', 'BAAT'
++    'BadNets', 'Blended','Refool', 'WaNet', 'LabelConsistent', 'Blind', 'IAD', 'LIRA', 'PhysicalBA', 'ISSBA','TUAP', 'SleeperAgent','BATT', 'AdaptivePatch'
+ ]
++
++# BAAT depends on the external ArtFlow style-transfer repository, which is not
++# installable from PyPI; keep the rest of the toolbox usable without it.
++try:
++    from .BAAT import BAAT
++    __all__.append('BAAT')
++except ImportError:  # pragma: no cover
++    pass
+diff --git a/core/defenses/__init__.py b/core/defenses/__init__.py
+index 0800f71..3643ce2 100644
+--- a/core/defenses/__init__.py
++++ b/core/defenses/__init__.py
+@@ -10,7 +10,8 @@ from .IBD_PSC import IBD_PSC
+ from .SCALE_UP import SCALE_UP
+ from .REFINE import REFINE
+ from .FLARE import FLARE
++from .PerceptualHash import PerceptualHash
+ 
+ __all__ = [
+-    'AutoEncoderDefense', 'ShrinkPad', 'FineTuning', 'MCR', 'NAD', 'Pruning', 'ABL', 'CutMix', 'IBD_PSC', 'SCALE_UP', 'REFINE', 'FLARE'
++    'AutoEncoderDefense', 'ShrinkPad', 'FineTuning', 'MCR', 'NAD', 'Pruning', 'ABL', 'CutMix', 'IBD_PSC', 'SCALE_UP', 'REFINE', 'FLARE', 'PerceptualHash'
+ ]
+diff --git a/core/models/resnet_curve.py b/core/models/resnet_curve.py
+index 17cd39d..a81c3f6 100644
+--- a/core/models/resnet_curve.py
++++ b/core/models/resnet_curve.py
+@@ -9,7 +9,7 @@ import sys, os
+ sys.path.append(os.path.join(os.getcwd(), 'core/models'))
+ import torch.nn as nn
+ import torch.nn.functional as F
+-import curves
++from . import curves
+ import math
+ 
+ class BasicBlockCurves(nn.Module):
+diff --git a/core/models/vgg_curve.py b/core/models/vgg_curve.py
+index 51b911c..b3fc67a 100644
+--- a/core/models/vgg_curve.py
++++ b/core/models/vgg_curve.py
+@@ -9,7 +9,7 @@ import torch
+ import torch.nn as nn
+ import torch.nn.functional as F
+ import math
+-import curves
++from . import curves
+ 
+ class VGGCurve(nn.Module):
+ 

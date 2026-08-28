@@ -1,0 +1,22 @@
+check,hash,n_bits,bit_agreement,mean_hamming,median_hamming,exact_match,bit_flip_rate
+imagehash_agreement,ahash,64,0.967234375,2.097,2.0,0.176,
+imagehash_agreement,dhash,64,0.906578125,5.979,6.0,0.002,
+imagehash_agreement,phash,64,0.996375,0.232,0.0,0.886,
+imagehash_agreement,whash_haar,64,0.999046875,0.061,0.0,0.969,
+imagehash_agreement,whash_db4,169,0.9983313609467456,0.282,0.0,0.864,
+imagehash_agreement,colorhash,42,0.9990476190476191,0.04,0.0,0.978,
+whash_haar_equals_mhash,whash_haar vs mhash,64,1.0,,,1.0,
+checkerboard_null_space,ahash,64,,,,1.0,0.0
+checkerboard_null_space,ahash16,256,,,,1.0,0.0
+checkerboard_null_space,mhash,64,,,,1.0,0.0
+checkerboard_null_space,phash,64,,,,0.93,0.0021875
+checkerboard_null_space,phash_mean,64,,,,0.883,0.00196875
+checkerboard_null_space,whash_haar,64,,,,1.0,0.0
+checkerboard_null_space,blockhash,256,,,,0.999,3.90625e-06
+checkerboard_null_space,dhash,64,,,,0.918,0.005953125
+checkerboard_null_space,dhash16,256,,,,0.882,0.0020546875
+checkerboard_null_space,pdq,256,,,,0.335,0.007640625
+checkerboard_null_space,rhash8,64,,,,0.363,0.018984375
+checkerboard_null_space,rhash16,256,,,,0.183,0.0119140625
+checkerboard_null_space,rhash32,1024,,,,0.0,0.39497265625
+checkerboard_null_space,rhash_energy,256,,,,0.0,0.2506015625
