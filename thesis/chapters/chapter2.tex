@@ -1,653 +1,165 @@
 \chapter{Literature Review}
 \label{chap:lr}
 
-This thesis connects four lines of research that have so far developed largely
-independently of each other: data poisoning and backdoor attacks, defenses
-against them, perceptual hash functions, and secure multi-party computation for
-machine learning. This chapter reviews each of them in turn.
-Section~\ref{sec:lr-attacks} classifies backdoor attacks and the metrics used
-to evaluate them. Section~\ref{sec:lr-defenses} surveys backdoor defenses, with
-an emphasis on dataset purification, the family to which the defense studied in
-this thesis belongs. Section~\ref{sec:lr-phash} introduces perceptual hash
-functions, their classical constructions and their known weaknesses.
-Section~\ref{sec:lr-mpc} reviews MPC protocols for machine learning, their cost
-structure and the existing work on poisoning in privacy-preserving learning.
-Every method is evaluated against the setting of this thesis: a poison-only
-adversary and a defender who can access the training data only in
-secret-shared form. Section~\ref{sec:lr-summary} summarises the review,
-identifies the research gap and justifies the choice of the research method.
+This chapter reviews backdoor attacks, defenses against them, perceptual hash
+functions and MPC for machine learning, and then states the research gap.
 
-\section{Data Poisoning and Backdoor Attacks}
+\section{Backdoor Attacks}
 \label{sec:lr-attacks}
 
-\subsection{Threat Models}
-\label{sec:lr-threat}
+Among the poisoning attacks studied since the work of Biggio
+\emph{et al.}~\cite{biggio2012poisoning}, backdoors are the most insidious,
+because the poisoned model keeps its accuracy on clean
+data~\cite{goldblum2023dataset}. Li
+\emph{et al.}~\cite{li2024backdoorsurvey} classify backdoor attacks along several
+axes, four of which decide whether a data-level defense can work: the adversary
+may only poison the data or also control training; the poisoned samples may be
+relabelled (dirty-label) or keep their labels (clean-label); the trigger may be
+visible or invisible; and it may be the same for every sample
+(sample-agnostic) or differ between samples (sample-specific). A filter applied
+to the training data is meaningful only against a poison-only adversary.
 
-Poisoning attacks on machine learning have been studied at least since Biggio
-\emph{et al.}~\cite{biggio2012poisoning} showed that a few carefully crafted
-training points could substantially increase the test error of a support vector
-machine. The surveys by Goldblum \emph{et al.}~\cite{goldblum2023dataset} and
-Li \emph{et al.}~\cite{li2024backdoorsurvey} distinguish poisoning attacks by
-their goal. \emph{Availability} attacks degrade the accuracy of the model on all
-inputs and are therefore easy to notice. \emph{Targeted} attacks change the
-prediction on specific test inputs; Shafahi
-\emph{et al.}~\cite{shafahi2018poisonfrogs}, for example, made a chosen test
-image misclassified by adding a few correctly labelled but adversarially
-perturbed images to the training set. \emph{Backdoor} attacks are the most
-insidious: the poisoned model keeps its accuracy on clean inputs and changes its
-prediction only on inputs that contain an adversary-chosen trigger. Since a
-backdoor is invisible to standard validation, this thesis focuses on backdoor
-attacks.
+BadNets~\cite{gu2019badnets} stamped a small fixed patch onto the poisoned
+images, and the Blended attack~\cite{chen2017blended} mixed a full-image pattern
+into them with a weight $\alpha$ that can be made small enough for the trigger to
+become invisible. Clean-label attacks keep the correct labels:
+Turner \emph{et al.}~\cite{turner2019labelconsistent} combined a patch with
+adversarial perturbations, Saha \emph{et al.}~\cite{saha2020hidden} and Souri
+\emph{et al.}~\cite{souri2022sleeper} hid the trigger completely at training
+time, and Refool~\cite{liu2020refool} used natural reflections. Sample-specific
+invisible triggers include the warping field of WaNet~\cite{nguyen2021wanet} and
+the encoder-generated residual of ISSBA~\cite{li2021issba}, whereas
+IAD~\cite{nguyen2020iad}, LIRA~\cite{doan2021lira} and blind
+backdoors~\cite{bagdasaryan2021blind} require control over training and lie
+outside the scope of any data filter. BATT~\cite{xu2023batt} uses a spatial
+transformation as the trigger. Finally, Qi
+\emph{et al.}~\cite{qi2023revisiting} designed adaptive attacks with several
+low-opacity triggers and correctly labelled cover samples, which removed the
+separation between poisoned and clean samples in the latent space of the model.
 
-The literature characterises backdoor attacks along several axes. Four of them
-determine whether a data-level defense can work in principle.
-\begin{enumerate}[label=\arabic*)]
-  \item \emph{Adversary capability.} A \emph{poison-only} adversary can only
-    modify the training data, whereas a \emph{training-controlled} adversary
-    also controls the training procedure, the loss or the training code. A
-    filter applied to the training data is meaningful only against the former,
-    because the latter can produce a backdoored model regardless of what the
-    data looks like.
-  \item \emph{Label consistency.} \emph{Dirty-label} attacks relabel the poisoned
-    samples to the target class. \emph{Clean-label} attacks poison only samples
-    of the target class and keep their correct labels, which defeats every
-    defense that looks for mislabelled samples.
-  \item \emph{Visibility.} A trigger may be clearly visible, such as a patch, or
-    invisible, with a perturbation small enough to go unnoticed by a human
-    inspector.
-  \item \emph{Trigger locality.} A \emph{sample-agnostic} trigger adds the same
-    pattern to every poisoned sample, whereas a \emph{sample-specific} trigger
-    produces a different perturbation for every image.
-\end{enumerate}
-
-\subsection{Representative Attacks}
-\label{sec:lr-attack-list}
-
-Table~\ref{tab:lr-attacks} classifies the attacks discussed in this section
-along the four axes. The first backdoor attack, BadNets, was introduced by Gu
-\emph{et al.}~\cite{gu2019badnets}. It stamped a small fixed patch, for example
-a $3\times3$ white square, onto a fraction of the training images and relabelled
-them to the target class. Chen \emph{et al.}~\cite{chen2017blended} replaced
-the patch with a full-image pattern blended into the image with weight
-$\alpha$; as $\alpha$ decreases, the blended trigger becomes invisible while it
-remains learnable. These two attacks remain the standard baselines of every
-backdoor benchmark~\cite{li2023backdoorbox,wu2022backdoorbench}. TrojanNN by
-Liu \emph{et al.}~\cite{liu2018trojaning} generated a trigger that maximally
-activated selected neurons of a pre-trained model and retrained the model,
-which requires access to the model rather than only to the data.
-
-Clean-label attacks emerged as a response to the observation that relabelled
-samples are easy to spot. Turner \emph{et al.}~\cite{turner2019labelconsistent}
-first made target-class images hard to classify with adversarial perturbations
-and then added a visible patch, so that the network had to rely on the patch.
-Saha \emph{et al.}~\cite{saha2020hidden} hid the trigger completely at training
-time: their poisoned images looked like correctly labelled target-class images
-but were close to patched images in feature space. Zhao
-\emph{et al.}~\cite{zhao2020cleanlabelvideo} extended clean-label attacks to
-video recognition with a universal adversarial trigger, and Souri
-\emph{et al.}~\cite{souri2022sleeper} used gradient matching to obtain hidden
-trigger backdoors that survived training from scratch. Refool by Liu
-\emph{et al.}~\cite{liu2020refool} used physically plausible reflections as
-triggers and was also designed as a clean-label attack.
-
-A third line of work makes the trigger invisible and different for every
-sample. WaNet~\cite{nguyen2021wanet} applies a smooth elastic warping field
-instead of adding a pattern, so the pixel-level change depends on the image
-content; its original version also modifies the training procedure with a
-``noise mode'' to evade defenses. ISSBA by Li
-\emph{et al.}~\cite{li2021issba} used a trained encoder to embed the same
-string into every poisoned image, which produced an invisible, sample-specific
-additive residual. Input-aware dynamic attacks~\cite{nguyen2020iad} and
-LIRA~\cite{doan2021lira} went further and learned the trigger generator jointly
-with the model, and blind backdoors~\cite{bagdasaryan2021blind} compromised the
-loss computation code itself. These three attacks are training-controlled and
-therefore outside the scope of any data filter. BATT by Xu
-\emph{et al.}~\cite{xu2023batt} took a different direction and used a spatial
-transformation, such as a fixed rotation, as the trigger, so that no additive
-pattern exists at all.
-
-The frequency domain offers another view of triggers. Zeng
-\emph{et al.}~\cite{zeng2021frequency} show that many existing triggers leave
-severe high-frequency artefacts, which allow poisoned inputs to be detected
-without knowledge of the attack or the target model, and propose smooth
-low-frequency triggers to evade such detection. Feng
-\emph{et al.}~\cite{feng2022fiba} inject the low-frequency content of a trigger
-image into the amplitude spectrum of medical images, a domain that is
-particularly relevant to privacy-preserving training.
-
-Finally, Qi \emph{et al.}~\cite{qi2023revisiting} designed adaptive attacks
-against a whole family of defenses. Most defenses assume that a model trained on
-poisoned data maps poisoned and clean samples to separable clusters in its
-latent space. Qi \emph{et al.} combined several low-opacity triggers with
-``cover'' samples that carry the trigger but keep their correct label, and
-showed that the resulting poisoned samples no longer formed a separable
-cluster. Since then, an evaluation against adaptive attacks has become a
-necessary part of proposing a new defense.
-
-\begin{table}[htbp]
-\centering
-\caption{Classification of Representative Backdoor Attacks}
-\label{tab:lr-attacks}
-\setstretch{1.0}
-\footnotesize
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.19\textwidth} >{\raggedright\arraybackslash}p{0.22\textwidth} >{\raggedright\arraybackslash}p{0.11\textwidth} >{\raggedright\arraybackslash}p{0.07\textwidth} >{\raggedright\arraybackslash}p{0.11\textwidth} >{\raggedright\arraybackslash}p{0.13\textwidth}}
-\toprule
-\textbf{Attack} & \textbf{Trigger} & \textbf{Visibility} & \textbf{Label} & \textbf{Locality} & \textbf{Adversary} \\
-\midrule
-BadNets~\cite{gu2019badnets} & local patch & visible & dirty & agnostic & poison-only \\
-Blended~\cite{chen2017blended} & blended global pattern & depends on $\alpha$ & dirty & agnostic & poison-only \\
-Label-consistent~\cite{turner2019labelconsistent} & patch on perturbed images & visible & clean & agnostic & poison-only \\
-Hidden trigger~\cite{saha2020hidden} & optimised perturbation & invisible & clean & specific & poison-only \\
-Sleeper Agent~\cite{souri2022sleeper} & gradient-matching perturbation & invisible & clean & specific & poison-only \\
-Refool~\cite{liu2020refool} & reflection & visible & clean$^{a}$ & specific & poison-only \\
-WaNet~\cite{nguyen2021wanet} & warping field & invisible & dirty & specific & training$^{b}$ \\
-ISSBA~\cite{li2021issba} & encoder-generated residual & invisible & dirty & specific & poison-only \\
-IAD~\cite{nguyen2020iad} & input-dependent pattern & visible & dirty & specific & training \\
-LIRA~\cite{doan2021lira} & learned perturbation & invisible & dirty & specific & training \\
-BATT~\cite{xu2023batt} & spatial transformation & visible & dirty & agnostic & poison-only \\
-Adaptive~\cite{qi2023revisiting} & several low-opacity patterns & low & dirty & partly specific & poison-only \\
-\bottomrule
-\multicolumn{6}{p{0.94\textwidth}}{$^{a}$The poison-only implementation in BackdoorBox~\cite{li2023backdoorbox}, which is used in this thesis, relabels the poisoned samples. $^{b}$Poison-only variants are provided by BackdoorBox and BackdoorBench~\cite{wu2022backdoorbench}.} \\
-\end{tabular}
-\end{table}
-
-\subsection{Evaluation Metrics}
-\label{sec:lr-metrics}
-
-The metrics used in the literature fall into three groups: model-level metrics,
-which describe the trained model; data-level metrics, which describe how well a
-purification defense separates poisoned samples from clean ones; and cost
-metrics, which are specific to the MPC setting and are discussed in
-Section~\ref{sec:lr-mpc-cost}.
-
-At the model level, an attack is evaluated with two
-quantities~\cite{li2024backdoorsurvey,li2023backdoorbox}. Let $f$ be the trained
-classifier, $D_{\mathrm{test}}$ the clean test set, $t$ the target class and
-$T$ the trigger function. The \emph{benign accuracy} (BA) is the accuracy on
-clean test data, and the \emph{attack success rate} (ASR) is the share of test
-samples outside the target class that are classified as $t$ once the trigger is
-applied:
-\begin{align}
-\mathrm{BA}  &= \frac{1}{|D_{\mathrm{test}}|}\sum_{(x,y)\in D_{\mathrm{test}}} \mathbb{I}\left[f(x)=y\right], \label{eq:ba}\\
-\mathrm{ASR} &= \frac{1}{|D_{\mathrm{test}}^{\neg t}|}\sum_{(x,y)\in D_{\mathrm{test}}^{\neg t}} \mathbb{I}\left[f(T(x))=t\right], \label{eq:asr}
-\end{align}
-where $\mathbb{I}[\cdot]$ is the indicator function and
-$D_{\mathrm{test}}^{\neg t}=\{(x,y)\in D_{\mathrm{test}} : y\neq t\}$. A
-successful attack keeps BA close to that of a clean model and drives ASR close
-to one; a successful defense keeps BA and drives ASR to zero.
-
-At the data level, a purification defense assigns a suspicion score to every
-training sample and removes the samples whose score exceeds a threshold. The
-quality of the score, independent of the threshold, is measured with the area
-under the receiver operating characteristic curve (AUC)~\cite{fawcett2006roc},
-which equals the probability that a randomly chosen poisoned sample receives a
-higher score than a randomly chosen clean one. The quality of the final
-decision is measured by the true and false positive rates. Let $S$ be the set of
-poisoned samples among the $n$ training samples and $K$ the set of samples kept
-by the defense. In this thesis, the two rates are called the \emph{elimination
-rate} $\eta$ and the \emph{sacrifice rate} $\sigma$:
-\begin{equation}
-\label{eq:eta-sigma}
-\eta = \frac{|S\setminus K|}{|S|}, \qquad
-\sigma = \frac{|\overline{K}\setminus S|}{n-|S|},
-\end{equation}
-where $\overline{K}$ is the set of removed samples. The elimination rate is the
-share of poison removed, and the sacrifice rate is the share of clean data lost.
+Attacks are evaluated by the benign accuracy (BA) on clean test data and by the
+attack success rate (ASR), the share of triggered test inputs classified as the
+target class~\cite{li2024backdoorsurvey}. Purification defenses are additionally
+evaluated by the area under the ROC curve (AUC)~\cite{fawcett2006roc} of their
+suspicion score and by the shares of poisoned and clean samples they remove.
 
 \section{Backdoor Defenses}
 \label{sec:lr-defenses}
 
-\subsection{Taxonomy}
-\label{sec:lr-def-taxonomy}
+Existing defenses act at different stages of the pipeline~\cite{li2024backdoorsurvey,li2023backdoorbox}.
+Input pre-processing~\cite{liu2017neuraltrojans,li2021shrinkpad} and input-level
+detection~\cite{gao2019strip,guo2023scaleup,hou2024ibdpsc} operate on a deployed
+model at inference time. Model repair methods such as
+Fine-Pruning~\cite{liu2018fineprune}, Neural Attention
+Distillation~\cite{li2021nad} and Neural Cleanse~\cite{wang2019neuralcleanse}
+require a trained model and a reserved set of clean data. Poison suppression
+methods~\cite{li2021abl,huang2022dbd} modify the training procedure, and
+certified defenses such as Deep Partition Aggregation~\cite{levine2021dpa} train
+many models on partitions of the data.
 
-Following the taxonomy of Li \emph{et al.}~\cite{li2024backdoorsurvey} and of
-the BackdoorBox toolbox~\cite{li2023backdoorbox}, backdoor defenses can be
-grouped by the stage of the machine learning pipeline at which they act.
-Table~\ref{tab:lr-defenses} summarises the groups and the resources that each
-of them requires.
-
-\emph{Input pre-processing} defenses try to destroy the trigger before a sample
-reaches a deployed model. Liu \emph{et al.}~\cite{liu2017neuraltrojans} passed
-inputs through an autoencoder, and ShrinkPad~\cite{li2021shrinkpad} shrinks and
-pads the input image to break the spatial alignment of a trigger. Such defenses
-mitigate the backdoor at inference time but do not prevent it from being
-learned.
-
-\emph{Model repair} defenses remove the backdoor from a trained model.
-Fine-Pruning~\cite{liu2018fineprune} pruned neurons that were dormant on clean
-data and then fine-tuned the model, mode connectivity
-repair~\cite{zhao2020mcr} searched for a path between two models in the loss
-landscape, and Neural Attention Distillation~\cite{li2021nad} fine-tuned a
-teacher model on a small clean set and distilled its attention maps into the
-backdoored student. Neural Cleanse~\cite{wang2019neuralcleanse} reverse-engineered
-a minimal trigger for every class and flagged classes with anomalously small
-triggers. All of these methods require a trained model and a reserved set of
-clean data.
-
-\emph{Poison suppression} defenses modify the training procedure itself.
-Anti-Backdoor Learning~\cite{li2021abl} exploited the observation that poisoned
-samples are learned faster than clean ones, isolated the samples with the lowest
-loss early in training and then unlearned them. Huang
-\emph{et al.}~\cite{huang2022dbd} decoupled training into self-supervised
-learning of the feature extractor, supervised training of the classifier head
-and semi-supervised fine-tuning, which prevents the trigger from being tied to
-the target label.
-
-\emph{Input-level detection} defenses decide at inference time whether a query
-carries a trigger. STRIP~\cite{gao2019strip} superimposed the input with clean
-images and flagged inputs whose predictions had suspiciously low entropy.
-SCALE-UP~\cite{guo2023scaleup} amplifies pixel values and
-IBD-PSC~\cite{hou2024ibdpsc} scales the parameters of batch normalisation layers;
-both rely on the observation that predictions on poisoned inputs stay
-consistent under such amplification. Each query thus costs several forward
-passes of the model.
-
-\emph{Certified} defenses provide provable guarantees against a bounded number
-of poisoned samples. Steinhardt \emph{et al.}~\cite{steinhardt2017certified}
-bounded the loss that an attacker could cause against defenses based on outlier
-removal, and Deep Partition Aggregation~\cite{levine2021dpa} trains a separate
-classifier on each of many disjoint partitions of the training set and takes a
-majority vote. The guarantees hold only for a small absolute number of poisoned
-samples and come at the cost of training many models.
-
-\emph{Dataset purification} defenses, finally, remove poisoned samples from the
-training set before the final model is trained. They are reviewed in detail in
-the next subsection, because the defense studied in this thesis belongs to this
-family.
-
-\begin{table}[htbp]
-\centering
-\caption{Families of Backdoor Defenses and the Resources They Require}
-\label{tab:lr-defenses}
-\setstretch{1.0}
-\footnotesize
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.15\textwidth} >{\raggedright\arraybackslash}p{0.18\textwidth} >{\raggedright\arraybackslash}p{0.11\textwidth} >{\raggedright\arraybackslash}p{0.11\textwidth} >{\raggedright\arraybackslash}p{0.09\textwidth} >{\raggedright\arraybackslash}p{0.19\textwidth}}
-\toprule
-\textbf{Family} & \textbf{Methods} & \textbf{Stage} & \textbf{Trained model} & \textbf{Clean data} & \textbf{Dominant operations} \\
-\midrule
-Input pre-processing & \cite{liu2017neuraltrojans,li2021shrinkpad} & inference & yes & partly & input transformation, autoencoder \\
-Model repair & \cite{liu2018fineprune,zhao2020mcr,li2021nad,wang2019neuralcleanse} & after training & yes & yes & fine-tuning, pruning, trigger optimisation \\
-Poison suppression & \cite{li2021abl,huang2022dbd} & training & modified training & no & loss ranking, self-supervised training \\
-Input-level detection & \cite{gao2019strip,guo2023scaleup,hou2024ibdpsc} & inference & yes & partly & repeated forward passes \\
-Certified & \cite{steinhardt2017certified,levine2021dpa} & training & many models & no & ensemble training, outlier removal \\
-Dataset purification & \cite{tran2018spectral,chen2019activation,hayase2021spectre,tang2021scan,pan2023asset,qi2023proactive,hou2025flare} & before training & yes, on poisoned data & mostly no & SVD, clustering, EM, robust covariance \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Dataset Purification}
-\label{sec:lr-purification}
-
-Dataset purification is the only family that removes the poison before the
-backdoor is learned and that requires no clean data, which makes it the natural
-choice when the training data comes from untrusted contributors. The
-foundational method, Spectral Signatures by Tran
-\emph{et al.}~\cite{tran2018spectral}, trained a network on the poisoned data,
-computed the covariance of the penultimate-layer representations within each
-class and scored every sample by its squared projection onto the top singular
-vector; the $1.5\varepsilon$ fraction of the highest-scoring samples was
-removed, where $\varepsilon$ is an upper bound on the poisoning rate. Activation
-Clustering by Chen \emph{et al.}~\cite{chen2019activation} reduced the
-last-layer activations of each class to a few dimensions with independent
-component analysis and split them into two clusters with $k$-means; a
-suspiciously small or well-separated cluster was declared poisoned.
-
-Later methods strengthened the statistic. SPECTRE by Hayase
-\emph{et al.}~\cite{hayase2021spectre} whitens the representations with a
-robust covariance estimate and scores samples with quantum entropy scoring,
-which amplifies a weak spectral signature. SCAn by Tang
-\emph{et al.}~\cite{tang2021scan} models the representations of each class as
-a mixture of a class identity and a within-class variation and tests with an
-EM-based decomposition whether a class contains two subpopulations. The
-latent separability assumption behind these methods was then challenged by the
-adaptive attacks of Qi \emph{et al.}~\cite{qi2023revisiting}. Subsequent
-defenses therefore act on the training process more actively: ASSET by Pan
-\emph{et al.}~\cite{pan2023asset} induces different model behaviours on
-backdoor and clean samples through an offset optimisation, confusion training by
-Qi \emph{et al.}~\cite{qi2023proactive} trains an auxiliary model that fits
-only the backdoor correlation, and FLARE by Hou
-\emph{et al.}~\cite{hou2025flare} aggregates abnormal activations from all
-hidden layers instead of the last one.
-
-Despite their differences, all of these methods share one structural
-dependency: their statistic lives in the representation space of a network that
-must first be trained on the poisoned data, and it is computed with singular
-value decomposition, clustering, EM or robust covariance estimation. As
-Section~\ref{sec:lr-mpc-cost} shows, both requirements are among the most
-expensive things one can compute under MPC.
-
-The only data-level statistic that does not depend on the victim model is the
-frequency analysis of Zeng \emph{et al.}~\cite{zeng2021frequency}. It
-demonstrates that the high-frequency component of an image carries much of the
-trigger signal, an observation that the residual hashes proposed in this thesis
-build upon. Their detector, however, is itself a neural network trained to
-recognise trigger artefacts, and it was proposed for inference-time inputs
-rather than for purifying a training set.
+Dataset purification removes poisoned samples before training and needs no
+clean data. Spectral Signatures~\cite{tran2018spectral} scored the
+samples of each class by their projection onto the top singular vector of the
+penultimate-layer features, and Activation Clustering~\cite{chen2019activation}
+split the same features into two clusters with $k$-means.
+SPECTRE~\cite{hayase2021spectre} and SCAn~\cite{tang2021scan} replaced these
+statistics with robust covariance estimation and an EM-based decomposition.
+After the adaptive attacks of Qi \emph{et al.}~\cite{qi2023revisiting},
+ASSET~\cite{pan2023asset}, confusion training~\cite{qi2023proactive} and
+FLARE~\cite{hou2025flare} began to shape the training process or to use all
+hidden layers. All of these methods, however, compute their statistic in the
+feature space of a network trained on the poisoned data, using SVD, clustering
+or EM. Zeng \emph{et al.}~\cite{zeng2021frequency} detect triggers by their
+high-frequency artefacts without the victim model, but their detector is itself
+a neural network applied to inference-time inputs.
 
 \section{Perceptual Hash Functions}
 \label{sec:lr-phash}
 
-\subsection{Definition and Design Goals}
-\label{sec:lr-phash-def}
+A perceptual hash maps an image to a short bit string so that perceptually
+similar images are close in Hamming distance, whereas unrelated images are
+not~\cite{venkatesan2000robust,monga2006perceptual,zauner2010phash,farid2021overview}.
+Classical constructions threshold a downscaled image or its gradients (average
+and difference hashes), its low-frequency DCT~\cite{ahmed1974dct} or wavelet
+coefficients~\cite{mallat1989wavelet} (pHash, the wavelet hash and
+PDQ~\cite{meta2019pdq}) or block statistics~\cite{yang2006blockmean}. Apart
+from the colour hash and the proprietary or learned PhotoDNA and
+NeuralHash~\cite{apple2021neuralhash}, all of them apply a fixed linear transform
+and compare each coefficient with a threshold.
 
-A perceptual hash function maps an image $x$ to a short bit string
-$h(x)\in\{0,1\}^{B}$ so that perceptually similar images obtain similar strings
-under the Hamming distance $d_H$, whereas unrelated images obtain strings at a
-distance close to $B/2$~\cite{zauner2010phash,farid2021overview}. The two
-requirements are usually called \emph{robustness} and
-\emph{discrimination}~\cite{monga2006perceptual}. Early work by Venkatesan
-\emph{et al.}~\cite{venkatesan2000robust} computed randomised statistics of
-wavelet coefficients, Swaminathan \emph{et al.}~\cite{swaminathan2006robust}
-studied key-dependent hashes and their security, and Monga and
-Evans~\cite{monga2006perceptual} built hashes from robust feature points and
-analysed the trade-off between robustness and discrimination. Zauner's
-benchmark~\cite{zauner2010phash} established the DCT-based pHash as a practical
-standard, and Farid~\cite{farid2021overview} gives a recent overview of the
-field. Perceptual hashes are the standard tool for near-duplicate detection,
-copyright enforcement and the detection of known illegal content.
-
-\subsection{Classical Constructions}
-\label{sec:lr-phash-zoo}
-
-Table~\ref{tab:lr-hashes} lists the constructions that are used in practice.
-The simplest ones, the average and difference hashes, are folklore methods
-popularised by open-source libraries. pHash applies the discrete cosine
-transform (DCT)~\cite{ahmed1974dct} to a downscaled image and keeps the signs
-of its low-frequency coefficients relative to their median; the wavelet hash
-does the same with the approximation band of a Haar wavelet
-transform~\cite{mallat1989wavelet}. The block mean hash of Yang
-\emph{et al.}~\cite{yang2006blockmean} thresholds the mean intensities of image
-blocks, and the Marr--Hildreth hash~\cite{zauner2010phash} binarises pooled
-responses of the Laplacian-of-Gaussian edge detector~\cite{marr1980edge}. PDQ,
-released by Meta in 2019~\cite{meta2019pdq}, is a hardened variant of pHash
-with a 256-bit output. PhotoDNA and NeuralHash are deployed in industry for
-content scanning. PhotoDNA, developed by Microsoft, is proprietary and has only
-been described at a high level~\cite{farid2021overview}, whereas NeuralHash
-projects the embedding of a convolutional network onto random
-hyperplanes~\cite{apple2021neuralhash,struppek2022neuralhash}.
-
-An important observation for this thesis concerns the structure of these
-constructions. Apart from the colour hash, PhotoDNA and NeuralHash, each of
-them first applies a fixed linear transform, a combination of colour
-conversion, resampling, filtering, DCT or wavelet transform and pooling, and
-then compares each resulting coefficient with a threshold. Chapter~\ref{chap:met}
-makes this observation precise and exploits it for the MPC analysis.
-
-\begin{table}[htbp]
-\centering
-\caption{Classical Perceptual Hash Functions}
-\label{tab:lr-hashes}
-\setstretch{1.0}
-\footnotesize
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.17\textwidth} >{\raggedright\arraybackslash}p{0.52\textwidth} >{\raggedright\arraybackslash}p{0.08\textwidth} >{\raggedright\arraybackslash}p{0.12\textwidth}}
-\toprule
-\textbf{Hash} & \textbf{Pipeline} & \textbf{Bits} & \textbf{Source} \\
-\midrule
-aHash & greyscale $8\times8$ thumbnail; bit = pixel $>$ mean & 64 & folklore \\
-dHash & greyscale $9\times8$ thumbnail; bit = sign of horizontal difference & 64 & folklore \\
-pHash & greyscale $32\times32$; 2-D DCT; $8\times8$ low-frequency block; bit = coefficient $>$ median & 64 & \cite{zauner2010phash} \\
-Wavelet hash & greyscale; Haar wavelet transform; approximation band; bit = coefficient $>$ median & 64 & \cite{mallat1989wavelet} \\
-Block mean hash & block means on a grid; bit = block mean $>$ median & 256 & \cite{yang2006blockmean} \\
-Marr--Hildreth & Laplacian-of-Gaussian response; pooled block responses binarised & 576 & \cite{zauner2010phash} \\
-Colour hash & shares of black, grey and hue-binned pixels, quantised & 42 & folklore \\
-PDQ & Jarosz blur; $64\times64$ luma; DCT; $16\times16$ block; bit = coefficient $>$ median & 256 & \cite{meta2019pdq} \\
-PhotoDNA & proprietary, described only at a high level & --- & \cite{farid2021overview} \\
-NeuralHash & CNN embedding; projection onto random hyperplanes & 96 & \cite{apple2021neuralhash,struppek2022neuralhash} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Security of Perceptual Hashing}
-\label{sec:lr-phash-security}
-
-Perceptual hashes are not cryptographic hash functions: they are designed to
-leak similarity, and the security community has repeatedly shown how easily
-they can be manipulated. Hao \emph{et al.}~\cite{hao2021notwhat} demonstrated
-black-box attacks that changed an image imperceptibly while pushing its hash far
-from the original, which subverted perceptual-hash-based image search.
-After Apple announced NeuralHash, Struppek
-\emph{et al.}~\cite{struppek2022neuralhash} showed that gradient-based attacks
-produced both collisions and evasions with imperceptible changes. Jain
-\emph{et al.}~\cite{jain2022adversarial} showed that perceptual-hash-based
-client-side scanning could be evaded in a black-box setting, and Prokos
-\emph{et al.}~\cite{prokos2023squint} mounted collision and detection-avoidance
-attacks against PhotoDNA and PDQ. Abelson \emph{et al.}~\cite{abelson2024bugs}
-summarised the risks of client-side scanning from a systems and policy
-perspective.
-
-The lesson that matters for this thesis is not that perceptual hashes are weak
-scanners, but that their invariance cuts both ways. The robustness that makes a
-hash map a slightly modified image to the same bits also makes it blind to a
-slight modification, and an invisible backdoor trigger is exactly such a
-modification. A defense that relies on a perceptual hash must therefore either
-accept this blindness or change the hash so that it retains the information that
-a trigger leaves behind.
-
-\subsection{Hashing in Machine Learning Pipelines}
-\label{sec:lr-phash-ml}
-
-Hashing already plays a role in the curation of training data, but never as a
-defense against poisoning. Barz and Denzler~\cite{barz2020cifair} found that
-3.3\% and 10\% of the test images of CIFAR-10 and CIFAR-100 had near-duplicates
-in the training set and released a cleaned test set. Near-duplicate removal of
-this kind targets redundancy, not adversarial structure. Carlini
-\emph{et al.}~\cite{carlini2024webscale} recommended distributing cryptographic
-hashes of the content of web-scale datasets to defeat split-view poisoning,
-which protects the integrity of exact content rather than detecting poisoned
-samples. Perceptual hashes have also been combined with cryptographic
-protocols: Kulshrestha and Mayer~\cite{kulshrestha2021identifying} proposed
-private membership computation that checks whether the perceptual hash of a
-message is close to a hash in a database of known harmful media. These
-protocols, however, match images against a known list and do not search for
-unknown poisoned samples. To the best of the author's knowledge, perceptual
-hashes have appeared in machine learning security only as the object of attacks
-and have never been used as a filter for poisoned training data.
+Perceptual hashes are not cryptographic, and they have been attacked
+repeatedly~\cite{hao2021notwhat,struppek2022neuralhash,jain2022adversarial,prokos2023squint}:
+small, often imperceptible changes suffice to move an image far from its hash or
+onto the hash of another image. For this thesis, the lesson is that invariance
+cuts both ways: a hash that ignores small changes is also blind to an invisible
+trigger. In machine learning pipelines, hashing has been used for
+near-duplicate removal~\cite{barz2020cifair}, for integrity checks of web-scale
+datasets~\cite{carlini2024webscale} and, under cryptographic protection, for
+matching images against known harmful content~\cite{kulshrestha2021identifying}.
+To the best of the author's knowledge, it has never been used to filter poisoned
+training samples.
 
 \section{Secure Multi-Party Computation for Machine Learning}
 \label{sec:lr-mpc}
 
-\subsection{Foundations}
-\label{sec:lr-mpc-foundations}
+MPC allows parties to compute a joint function of their private inputs without
+revealing them~\cite{yao1986generate,goldreich1987play,benor1988completeness}.
+Privacy-preserving machine learning relies mainly on honest-majority
+three-party replicated secret sharing~\cite{araki2016highthroughput,mohassel2018aby3,wagh2021falcon}
+and on dishonest-majority protocols of the SPDZ
+family~\cite{damgard2012spdz,cramer2018spdz2k}, implemented in frameworks such as
+SecureML~\cite{mohassel2017secureml}, CrypTen~\cite{knott2021crypten} and
+MP-SPDZ~\cite{keller2020mpspdz}. These protocols share a cost structure. Linear
+operations with public coefficients, including a DCT or a wavelet transform,
+are local and free; a multiplication of two secrets costs one round with
+precomputed triples~\cite{beaver1991efficient}; a comparison requires a bit
+decomposition with $O(k\log k)$ AND gates and $O(\log k)$ rounds for a $k$-bit
+ring~\cite{catrina2010primitives,escudero2020edabits}; and sorting and iterative
+algorithms such as $k$-means multiply this cost by the number of comparisons and
+iterations~\cite{batcher1968sorting,mohassel2020kmeans}. A defense that first
+trains a deep network and then runs SVD or clustering is therefore impractical
+under MPC.
 
-Secure multi-party computation allows $N$ parties holding private inputs to
-compute a joint function so that nothing beyond the output is revealed. Yao
-introduced garbled circuits for the two-party case~\cite{yao1986generate}, and
-Goldreich, Micali and Wigderson~\cite{goldreich1987play} and Ben-Or,
-Goldwasser and Wigderson~\cite{benor1988completeness} showed that any function
-can be computed securely by several parties, the latter with
-information-theoretic security based on Shamir's secret
-sharing~\cite{shamir1979share}. Beaver~\cite{beaver1991efficient} showed that
-multiplications can be performed cheaply online with correlated randomness
-prepared in advance, which is the basis of most modern protocols. Protocols are
-distinguished by the corruption model, semi-honest or malicious, and by the
-number of corrupted parties they tolerate, an honest majority or a dishonest
-majority.
-
-\subsection{Protocols and Frameworks for Machine Learning}
-\label{sec:lr-mpc-frameworks}
-
-Two protocol families dominate privacy-preserving machine learning. In the
-honest-majority three-party setting, replicated secret sharing over the ring
-$\mathbb{Z}_{2^k}$, introduced in a high-throughput form by Araki
-\emph{et al.}~\cite{araki2016highthroughput}, underlies ABY3 by Mohassel and
-Rindal~\cite{mohassel2018aby3}, SecureNN~\cite{wagh2019securenn} and
-Falcon~\cite{wagh2021falcon}. ABY3 combined arithmetic, binary and garbled
-sharings with efficient conversions and introduced a local probabilistic
-truncation for fixed-point arithmetic. In the dishonest-majority setting,
-SPDZ~\cite{damgard2012spdz} used somewhat homomorphic encryption to prepare
-multiplication triples and information-theoretic MACs to achieve malicious
-security, and SPD$\mathbb{Z}_{2^k}$~\cite{cramer2018spdz2k} carried this
-approach over to rings. Two-party mixed-protocol frameworks include
-ABY~\cite{demmler2015aby} and SecureML~\cite{mohassel2017secureml}, which
-trained linear models and neural networks with two non-colluding servers.
-CrypTen~\cite{knott2021crypten} exposes secure computation through a
-PyTorch-like interface, and MP-SPDZ~\cite{keller2020mpspdz} implements a large
-number of protocol variants behind one high-level language, which makes it the
-standard tool for comparing protocols.
-
-\subsection{Cost Structure}
-\label{sec:lr-mpc-cost}
-
-Although these protocols differ in their security guarantees, they share a
-common cost structure, which Table~\ref{tab:lr-mpc-cost} summarises. Two
-measures dominate the cost: the volume of communication and the number of
-sequential communication rounds. Over a wide-area network, the latter often
-determines the running time.
-
-Addition of shared values and multiplication by a public constant are local
-operations in every linear secret-sharing scheme. Consequently, any linear map
-with public coefficients, such as a convolution with public weights, a DCT, a
-wavelet transform or average pooling, costs no communication at all. A
-multiplication of two shared values requires one round of interaction and a
-constant number of ring elements per party~\cite{beaver1991efficient}.
-Fixed-point arithmetic additionally requires a truncation after every
-multiplication, which is interactive in general~\cite{catrina2010fixedpoint}
-but can be performed locally with a small probabilistic error in the
-three-party replicated setting~\cite{mohassel2018aby3}.
-
-Comparisons are the expensive primitive. Deciding whether a shared value is
-positive requires access to its most significant bit, that is, a bit
-decomposition or an equivalent protocol~\cite{damgard2006constantrounds,catrina2010primitives}.
-Practical implementations evaluate a binary adder circuit, for example a
-Kogge--Stone parallel prefix adder~\cite{kogge1973parallel}, which costs
-$O(k\log k)$ AND gates and $O(\log k)$ rounds for a $k$-bit ring; mixed
-arithmetic--binary preprocessing such as edaBits~\cite{escudero2020edabits}
-reduces, but does not remove, this cost. Order statistics are more expensive
-still. An oblivious sort of $n$ values with Batcher's
-network~\cite{batcher1968sorting} needs $O(n\log^2 n)$ compare-exchange
-operations in $O(\log^2 n)$ layers, and shuffle-based protocols reduce the
-number of comparisons to $O(n\log n)$ at the price of a secure
-shuffle~\cite{hamada2012sorting}. Iterative algorithms such as $k$-means must
-fix their number of iterations in advance to avoid leaking information and pay
-for distance computations and comparisons in every
-iteration~\cite{mohassel2020kmeans}. Division, square roots and exponentials
-are computed with iterative approximations that require many
-rounds~\cite{catrina2010fixedpoint}.
-
-\begin{table}[htbp]
-\centering
-\caption{Cost of Basic Operations Under Linear Secret Sharing}
-\label{tab:lr-mpc-cost}
-\setstretch{1.0}
-\footnotesize
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.32\textwidth} >{\raggedright\arraybackslash}p{0.24\textwidth} >{\raggedright\arraybackslash}p{0.16\textwidth} >{\raggedright\arraybackslash}p{0.16\textwidth}}
-\toprule
-\textbf{Operation} & \textbf{Communication} & \textbf{Rounds} & \textbf{References} \\
-\midrule
-Addition, multiplication by a public constant, public linear map & none & 0 & --- \\
-Multiplication of two shared values & $O(1)$ ring elements per party & 1 & \cite{beaver1991efficient} \\
-Fixed-point truncation & none (3PC) to $O(1)$ & 0--1 & \cite{mohassel2018aby3,catrina2010fixedpoint} \\
-Comparison of $k$-bit values & $O(k\log k)$ AND gates & $O(\log k)$ & \cite{catrina2010primitives,kogge1973parallel,escudero2020edabits} \\
-Sorting of $n$ values & $O(n\log^2 n)$ comparisons & $O(\log^2 n\cdot\log k)$ & \cite{batcher1968sorting,hamada2012sorting} \\
-$k$-means, SVD, division & comparisons and multiplications in every iteration & many & \cite{mohassel2020kmeans,catrina2010fixedpoint} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-This cost structure has direct consequences for backdoor defenses. Training a
-deep network under MPC requires millions of secure multiplications and
-comparisons per sample and epoch, which is why secure training remains orders of
-magnitude slower than training in the clear even in the most efficient
-frameworks~\cite{wagh2021falcon,knott2021crypten}. The model-based purification
-defenses of Section~\ref{sec:lr-purification} require such a training run before
-the final one and then add SVD, clustering or EM on top of it. A defense whose
-arithmetic is a public linear map followed by a fixed number of comparisons per
-sample, in contrast, would cost almost nothing beyond those comparisons.
-
-\subsection{Poisoning in Privacy-Preserving Learning}
-\label{sec:lr-mpc-poisoning}
-
-The conflict between confidentiality and the ability to inspect training data
-was first studied in federated learning. Bagdasaryan
-\emph{et al.}~\cite{bagdasaryan2020backdoorfl} showed that a single malicious
-participant could replace the global model with a backdoored one, and secure
-aggregation~\cite{bonawitz2017secagg}, which hides individual updates from the
-server, makes such manipulations harder to detect. Several works have
-therefore combined secure aggregation with robustness checks. BREA by So
-\emph{et al.}~\cite{so2021brea} integrated verifiable outlier detection into
-secure aggregation, FLAME by Nguyen \emph{et al.}~\cite{nguyen2022flame}
-clustered model updates and clipped and noised them to eliminate backdoors, and
-RoFL~\cite{lycklama2023rofl} and ELSA~\cite{rathee2023elsa} enforced bounds on
-the norms of client updates inside the secure protocol. Prio by Corrigan-Gibbs
-and Boneh~\cite{corrigangibbs2017prio} validated client inputs with
-secret-shared non-interactive proofs before aggregation. Notably, these systems deliberately
-restrict themselves to cheap statistics such as norms and avoid medians, sorting
-and clustering for the same cost reasons that were discussed above.
-
-For collaborative training in MPC, Chaudhari
-\emph{et al.}~\cite{chaudhari2023safenet} proposed SafeNet. In SafeNet, every
-data owner trains a model on their own data, the models are combined into an
-ensemble inside MPC, and a majority vote limits the influence of a minority of
-poisoned owners. This approach is effective and cheap, but it requires every
-owner to hold enough data to train a model and it protects against poisoned
-owners rather than against poisoned samples.
-
-All of these defenses operate on model updates or on whole models. None of them
-filters individual training samples, and none of them applies when the poison is
-spread across the data of honest owners, for example because it was scraped from
-the web.
+Poisoning in privacy-preserving learning has been studied mainly for federated
+learning, where a single participant can implant a
+backdoor~\cite{bagdasaryan2020backdoorfl} and secure
+aggregation~\cite{bonawitz2017secagg} hides individual updates. Robust secure
+aggregation schemes~\cite{so2021brea,nguyen2022flame,lycklama2023rofl,rathee2023elsa}
+filter or bound model updates with cheap statistics such as norms, and
+SafeNet~\cite{chaudhari2023safenet} limits the influence of a minority of
+poisoned data owners in MPC training with an ensemble of locally trained
+models. None of these defenses filters individual samples.
 
 \section{Summary and Research Gap}
 \label{sec:lr-summary}
 
-Table~\ref{tab:lr-gap} compares the families of approaches reviewed in this
-chapter against the requirements of the setting studied in this thesis: a
-defense that filters individual samples, works without a trained model, uses
-only operations that are cheap under MPC and is effective against invisible
-triggers.
+Table~\ref{tab:lr-gap} compares the reviewed approaches with the requirements of
+this thesis. Dataset purification defenses depend on a model trained on the
+poisoned data, defenses for privacy-preserving learning do not work at the level
+of samples, and perceptual hashes fit the MPC cost model but have never been
+evaluated against poisoning. The thesis therefore builds a defense on
+per-sample hash bits and on statistics that need no trained model, adds hashes
+that keep the high-frequency component where triggers
+reside~\cite{zeng2021frequency}, evaluates it with the established metrics
+against attacks from BackdoorBox~\cite{li2023backdoorbox}, including adaptive
+ones~\cite{qi2023revisiting}, and estimates its cost under three-party and
+two-party MPC protocols~\cite{mohassel2018aby3,cramer2018spdz2k}.
 
 \begin{table}[htbp]
 \centering
-\caption{Comparison of Existing Approaches With the Requirements of This Thesis}
+\caption{Comparison of Existing Approaches}
 \label{tab:lr-gap}
 \setstretch{1.0}
 \footnotesize
-\begin{tabular}{>{\raggedright\arraybackslash}p{0.27\textwidth} >{\raggedright\arraybackslash}p{0.11\textwidth} >{\raggedright\arraybackslash}p{0.11\textwidth} >{\raggedright\arraybackslash}p{0.12\textwidth} >{\raggedright\arraybackslash}p{0.19\textwidth}}
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.30\textwidth} >{\raggedright\arraybackslash}p{0.10\textwidth} >{\raggedright\arraybackslash}p{0.11\textwidth} >{\raggedright\arraybackslash}p{0.11\textwidth} >{\raggedright\arraybackslash}p{0.18\textwidth}}
 \toprule
 \textbf{Approach} & \textbf{Sample level} & \textbf{No trained model} & \textbf{Cheap under MPC} & \textbf{Invisible triggers} \\
 \midrule
 Model-based purification~\cite{tran2018spectral,chen2019activation,hayase2021spectre,tang2021scan,hou2025flare} & yes & no & no & yes, weakened by adaptive attacks \\
 Input-level detection~\cite{gao2019strip,guo2023scaleup,hou2024ibdpsc} & per query & no & no & yes \\
-Frequency-domain detection~\cite{zeng2021frequency} & yes & auxiliary network & no & high-frequency triggers only \\
 Robust secure aggregation~\cite{so2021brea,nguyen2022flame,lycklama2023rofl,rathee2023elsa} & no & no & partly & not applicable \\
-MPC ensembles~\cite{chaudhari2023safenet} & no & no & yes & if confined to a minority of owners \\
+MPC ensembles~\cite{chaudhari2023safenet} & no & no & yes & not applicable \\
 Perceptual hashing & yes & yes & yes & unknown \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-The review leads to three conclusions. First, every dataset purification
-defense that currently defines the state of the art depends on a model trained
-on the poisoned data and on statistics such as SVD, clustering and EM. Both are
-among the most expensive computations under MPC, so these defenses are
-impractical exactly in the setting where the data cannot be inspected. Second,
-the defenses that do exist for privacy-preserving learning operate on model
-updates or whole models and do not filter individual samples. Third, perceptual
-hash functions fit the MPC cost model almost perfectly, since their arithmetic
-is a public linear map and only the final binarisation requires interaction,
-but they have never been evaluated as a defense against poisoning, and their
-designed invariance suggests that they may be blind to invisible triggers.
-Nobody has measured whether the information that survives a perceptual hash is
-sufficient to separate poisoned samples from clean ones.
-
-These conclusions justify the research method adopted in the following
-chapters. The defense is built on per-sample hash bits and on detection
-statistics that need no trained model, so that its MPC cost consists of a fixed
-number of comparisons per sample. Because the invariance of classical hashes is
-expected to hide invisible triggers, the study also designs hashes that retain
-the high-frequency component in which, according to Zeng
-\emph{et al.}~\cite{zeng2021frequency}, many triggers reside. The defense is
-evaluated with the metrics established in the literature: the detection AUC and
-the elimination and sacrifice rates at the data level, and BA and ASR at the
-model level. To separate trigger detection from the detection of the label
-noise that every dirty-label attack introduces, a label-flip-only control is
-added. The attacks are taken from
-BackdoorBox~\cite{li2023backdoorbox} and cover all four axes of
-Table~\ref{tab:lr-attacks}, including the adaptive attacks of Qi
-\emph{et al.}~\cite{qi2023revisiting}, and the experiments use the CIFAR-10
-dataset~\cite{krizhevsky2009cifar}, the most common benchmark of the backdoor
-literature~\cite{wu2022backdoorbench}. Finally, the MPC cost is estimated by
-counting the communication primitives of every hash and pricing them under an
-honest-majority three-party replicated protocol~\cite{mohassel2018aby3} and a
-dishonest-majority two-party SPDZ-style protocol~\cite{cramer2018spdz2k}, the
-two protocol families that dominate privacy-preserving machine learning.
