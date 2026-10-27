@@ -1,53 +1,820 @@
-@ARTICLE{A,
-  author = {A. A. Aardvark},
-  title = {Article title},
-  journal = {Journal Title},
-  year = {1900},
-  volume = {1},
-  pages = {1--8},
-  number = {1}
+% ===================================================================
+% Data poisoning: background and surveys
+% ===================================================================
+
+@inproceedings{biggio2012poisoning,
+  author    = {Biggio, Battista and Nelson, Blaine and Laskov, Pavel},
+  title     = {Poisoning Attacks against Support Vector Machines},
+  booktitle = {Proceedings of the 29th International Conference on Machine Learning (ICML)},
+  year      = {2012}
 }
 
-@incollection{B,
-  pages = {627-637},
-  title = {Title of chapter in the book,},
-  author = {Sweetser, Penny},
-  crossref = {crref}
-}
-@book{crref,
-  title = {Title of Published Book},
-  booktitle = {Title of Published Book},
-  publisher = {Charles River Media},
-  year = {2004},
-  address = {Hingham, Massachusetts, USA},
-  edition = {1}
+@article{goldblum2023dataset,
+  author  = {Goldblum, Micah and Tsipras, Dimitris and Xie, Chulin and Chen, Xinyun and Schwarzschild, Avi and Song, Dawn and Madry, Aleksander and Li, Bo and Goldstein, Tom},
+  title   = {Dataset Security for Machine Learning: Data Poisoning, Backdoor Attacks, and Defenses},
+  journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume  = {45},
+  number  = {2},
+  pages   = {1563--1580},
+  year    = {2023}
 }
 
-@ARTICLE{C,
-  author = {A. A. Abramson and B. B. Barbie and C. C. Rider},
-  title = {Article title},
-  journal = {Journal Three},
-  year = {1900},
-  volume = {1},
-  pages = {192--244},
-  number = {1}
+@article{li2024backdoorsurvey,
+  author  = {Li, Yiming and Jiang, Yong and Li, Zhifeng and Xia, Shu-Tao},
+  title   = {Backdoor Learning: A Survey},
+  journal = {IEEE Transactions on Neural Networks and Learning Systems},
+  volume  = {35},
+  number  = {1},
+  pages   = {5--22},
+  year    = {2024}
 }
 
-@ARTICLE{D,
-  author = {J.K.Author},
-  title = {Article title},
-  journal = {Journal Three},
-  year = {1900},
-  month = {6},
-  volume = {1},
-  pages = {192--244},
-  number = {1},
-  note="Accessed: June 19, 2005. doi: 10.1109/TTHZ.2016.2544142. [Online]. Available: \url{https://ieeexplore.ieee.org/document/7463081}"
+@inproceedings{kumar2020industry,
+  author    = {Kumar, Ram Shankar Siva and Nystr{\"o}m, Magnus and Lambert, John and Marshall, Andrew and Goertzel, Mario and Comissoneru, Andi and Swann, Matt and Xia, Sharon},
+  title     = {Adversarial Machine Learning -- Industry Perspectives},
+  booktitle = {IEEE Security and Privacy Workshops (SPW)},
+  pages     = {69--75},
+  year      = {2020}
 }
 
-@CONFERENCE{F,
-  author       = "J\dot K\dot Author",
-  title        = "Title of paper",
-  booktitle    = "Abbreviated Name of Conf.",
-  note         = "1900, pp. 16--19. Accessed: June 19, 2005. [Online]. Available: \url{http://www.computer.org/csdl/proceedings/dac/2003/2394/00/2394001-abs.html}",
+@inproceedings{shafahi2018poisonfrogs,
+  author    = {Shafahi, Ali and Huang, W. Ronny and Najibi, Mahyar and Suciu, Octavian and Studer, Christoph and Dumitras, Tudor and Goldstein, Tom},
+  title     = {Poison Frogs! {Targeted} Clean-Label Poisoning Attacks on Neural Networks},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2018}
+}
+
+@inproceedings{carlini2024webscale,
+  author    = {Carlini, Nicholas and Jagielski, Matthew and Choquette-Choo, Christopher A. and Paleka, Daniel and Pearce, Will and Anderson, Hyrum and Terzis, Andreas and Thomas, Kurt and Tram{\`e}r, Florian},
+  title     = {Poisoning Web-Scale Training Datasets is Practical},
+  booktitle = {IEEE Symposium on Security and Privacy (S\&P)},
+  year      = {2024}
+}
+
+% ===================================================================
+% Backdoor attacks
+% ===================================================================
+
+@article{gu2019badnets,
+  author  = {Gu, Tianyu and Liu, Kang and Dolan-Gavitt, Brendan and Garg, Siddharth},
+  title   = {{BadNets}: Evaluating Backdooring Attacks on Deep Neural Networks},
+  journal = {IEEE Access},
+  volume  = {7},
+  pages   = {47230--47244},
+  year    = {2019},
+  doi     = {10.1109/ACCESS.2019.2909068}
+}
+
+@misc{chen2017blended,
+  author     = {Chen, Xinyun and Liu, Chang and Li, Bo and Lu, Kimberly and Song, Dawn},
+  title      = {Targeted Backdoor Attacks on Deep Learning Systems Using Data Poisoning},
+  year       = {2017},
+  eprint     = {1712.05526},
+  eprinttype = {arxiv}
+}
+
+@inproceedings{liu2018trojaning,
+  author    = {Liu, Yingqi and Ma, Shiqing and Aafer, Yousra and Lee, Wen-Chuan and Zhai, Juan and Wang, Weihang and Zhang, Xiangyu},
+  title     = {Trojaning Attack on Neural Networks},
+  booktitle = {Network and Distributed System Security Symposium (NDSS)},
+  year      = {2018}
+}
+
+@misc{turner2019labelconsistent,
+  author     = {Turner, Alexander and Tsipras, Dimitris and Madry, Aleksander},
+  title      = {Label-Consistent Backdoor Attacks},
+  year       = {2019},
+  eprint     = {1912.02771},
+  eprinttype = {arxiv}
+}
+
+@inproceedings{saha2020hidden,
+  author    = {Saha, Aniruddha and Subramanya, Akshayvarun and Pirsiavash, Hamed},
+  title     = {Hidden Trigger Backdoor Attacks},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  pages     = {11957--11965},
+  year      = {2020}
+}
+
+@inproceedings{zhao2020cleanlabelvideo,
+  author    = {Zhao, Shihao and Ma, Xingjun and Zheng, Xiang and Bailey, James and Chen, Jingjing and Jiang, Yu-Gang},
+  title     = {Clean-Label Backdoor Attacks on Video Recognition Models},
+  booktitle = {IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {14431--14440},
+  year      = {2020}
+}
+
+@inproceedings{liu2020refool,
+  author    = {Liu, Yunfei and Ma, Xingjun and Bailey, James and Lu, Feng},
+  title     = {Reflection Backdoor: A Natural Backdoor Attack on Deep Neural Networks},
+  booktitle = {European Conference on Computer Vision (ECCV)},
+  pages     = {182--199},
+  year      = {2020}
+}
+
+@inproceedings{nguyen2020iad,
+  author    = {Nguyen, Tuan Anh and Tran, Anh Tuan},
+  title     = {Input-Aware Dynamic Backdoor Attack},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2020}
+}
+
+@inproceedings{nguyen2021wanet,
+  author    = {Nguyen, Tuan Anh and Tran, Anh Tuan},
+  title     = {{WaNet} -- Imperceptible Warping-Based Backdoor Attack},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2021}
+}
+
+@inproceedings{li2021issba,
+  author    = {Li, Yuezun and Li, Yiming and Wu, Baoyuan and Li, Longkang and He, Ran and Lyu, Siwei},
+  title     = {Invisible Backdoor Attack with Sample-Specific Triggers},
+  booktitle = {IEEE/CVF International Conference on Computer Vision (ICCV)},
+  pages     = {16443--16452},
+  year      = {2021}
+}
+
+@inproceedings{doan2021lira,
+  author    = {Doan, Khoa and Lao, Yingjie and Zhao, Weijie and Li, Ping},
+  title     = {{LIRA}: Learnable, Imperceptible and Robust Backdoor Attacks},
+  booktitle = {IEEE/CVF International Conference on Computer Vision (ICCV)},
+  pages     = {11946--11956},
+  year      = {2021}
+}
+
+@inproceedings{bagdasaryan2021blind,
+  author    = {Bagdasaryan, Eugene and Shmatikov, Vitaly},
+  title     = {Blind Backdoors in Deep Learning Models},
+  booktitle = {30th USENIX Security Symposium},
+  pages     = {1505--1521},
+  year      = {2021}
+}
+
+@inproceedings{souri2022sleeper,
+  author    = {Souri, Hossein and Fowl, Liam and Chellappa, Rama and Goldblum, Micah and Goldstein, Tom},
+  title     = {Sleeper Agent: Scalable Hidden Trigger Backdoors for Neural Networks Trained from Scratch},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2022}
+}
+
+@inproceedings{xu2023batt,
+  author    = {Xu, Tong and Li, Yiming and Jiang, Yong and Xia, Shu-Tao},
+  title     = {{BATT}: Backdoor Attack with Transformation-Based Triggers},
+  booktitle = {IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+  year      = {2023}
+}
+
+@inproceedings{qi2023revisiting,
+  author    = {Qi, Xiangyu and Xie, Tinghao and Li, Yiming and Mahloujifar, Saeed and Mittal, Prateek},
+  title     = {Revisiting the Assumption of Latent Separability for Backdoor Defenses},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2023}
+}
+
+@inproceedings{zeng2021frequency,
+  author    = {Zeng, Yi and Park, Won and Mao, Z. Morley and Jia, Ruoxi},
+  title     = {Rethinking the Backdoor Attacks' Triggers: A Frequency Perspective},
+  booktitle = {IEEE/CVF International Conference on Computer Vision (ICCV)},
+  pages     = {16453--16461},
+  year      = {2021}
+}
+
+@inproceedings{feng2022fiba,
+  author    = {Feng, Yu and Ma, Benteng and Zhang, Jing and Zhao, Shanshan and Xia, Yong and Tao, Dacheng},
+  title     = {{FIBA}: Frequency-Injection Based Backdoor Attack in Medical Image Analysis},
+  booktitle = {IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {20844--20853},
+  year      = {2022}
+}
+
+@misc{li2023backdoorbox,
+  author       = {Li, Yiming and Ya, Mengxi and Bai, Yang and Jiang, Yong and Xia, Shu-Tao},
+  title        = {{BackdoorBox}: A {Python} Toolbox for Backdoor Learning},
+  year         = {2023},
+  eprint       = {2302.01762},
+  eprinttype   = {arxiv},
+  url          = {https://github.com/THUYimingLi/BackdoorBox}
+}
+
+@inproceedings{wu2022backdoorbench,
+  author    = {Wu, Baoyuan and Chen, Hongrui and Zhang, Mingda and Zhu, Zihao and Wei, Shaokui and Yuan, Danni and Shen, Chao},
+  title     = {{BackdoorBench}: A Comprehensive Benchmark of Backdoor Learning},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track},
+  year      = {2022}
+}
+
+% ===================================================================
+% Backdoor defenses
+% ===================================================================
+
+@inproceedings{liu2017neuraltrojans,
+  author    = {Liu, Yuntao and Xie, Yang and Srivastava, Ankur},
+  title     = {Neural Trojans},
+  booktitle = {IEEE International Conference on Computer Design (ICCD)},
+  pages     = {45--48},
+  year      = {2017}
+}
+
+@inproceedings{li2021shrinkpad,
+  author    = {Li, Yiming and Zhai, Tongqing and Jiang, Yong and Li, Zhifeng and Xia, Shu-Tao},
+  title     = {Backdoor Attack in the Physical World},
+  booktitle = {ICLR Workshop on Robust and Reliable Machine Learning in the Real World},
+  year      = {2021}
+}
+
+@inproceedings{liu2018fineprune,
+  author    = {Liu, Kang and Dolan-Gavitt, Brendan and Garg, Siddharth},
+  title     = {Fine-Pruning: Defending Against Backdooring Attacks on Deep Neural Networks},
+  booktitle = {Research in Attacks, Intrusions, and Defenses (RAID)},
+  pages     = {273--294},
+  year      = {2018}
+}
+
+@inproceedings{wang2019neuralcleanse,
+  author    = {Wang, Bolun and Yao, Yuanshun and Shan, Shawn and Li, Huiying and Viswanath, Bimal and Zheng, Haitao and Zhao, Ben Y.},
+  title     = {Neural Cleanse: Identifying and Mitigating Backdoor Attacks in Neural Networks},
+  booktitle = {IEEE Symposium on Security and Privacy (S\&P)},
+  pages     = {707--723},
+  year      = {2019}
+}
+
+@inproceedings{zhao2020mcr,
+  author    = {Zhao, Pu and Chen, Pin-Yu and Das, Payel and Ramamurthy, Karthikeyan Natesan and Lin, Xue},
+  title     = {Bridging Mode Connectivity in Loss Landscapes and Adversarial Robustness},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2020}
+}
+
+@inproceedings{li2021nad,
+  author    = {Li, Yige and Lyu, Xixiang and Koren, Nodens and Lyu, Lingjuan and Li, Bo and Ma, Xingjun},
+  title     = {Neural Attention Distillation: Erasing Backdoor Triggers from Deep Neural Networks},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2021}
+}
+
+@inproceedings{li2021abl,
+  author    = {Li, Yige and Lyu, Xixiang and Koren, Nodens and Lyu, Lingjuan and Li, Bo and Ma, Xingjun},
+  title     = {Anti-Backdoor Learning: Training Clean Models on Poisoned Data},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2021}
+}
+
+@inproceedings{huang2022dbd,
+  author    = {Huang, Kunzhe and Li, Yiming and Wu, Baoyuan and Qin, Zhan and Ren, Kui},
+  title     = {Backdoor Defense via Decoupling the Training Process},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2022}
+}
+
+@inproceedings{gao2019strip,
+  author    = {Gao, Yansong and Xu, Change and Wang, Derui and Chen, Shiping and Ranasinghe, Damith C. and Nepal, Surya},
+  title     = {{STRIP}: A Defence Against Trojan Attacks on Deep Neural Networks},
+  booktitle = {Annual Computer Security Applications Conference (ACSAC)},
+  pages     = {113--125},
+  year      = {2019}
+}
+
+@inproceedings{guo2023scaleup,
+  author    = {Guo, Junfeng and Li, Yiming and Chen, Xun and Guo, Hanqing and Sun, Lichao and Liu, Cong},
+  title     = {{SCALE-UP}: An Efficient Black-Box Input-Level Backdoor Detection via Analyzing Scaled Prediction Consistency},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2023}
+}
+
+@inproceedings{hou2024ibdpsc,
+  author    = {Hou, Linshan and Feng, Ruili and Hua, Zhongyun and Luo, Wei and Zhang, Leo Yu and Li, Yiming},
+  title     = {{IBD-PSC}: Input-Level Backdoor Detection via Parameter-Oriented Scaling Consistency},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  year      = {2024}
+}
+
+@inproceedings{tran2018spectral,
+  author    = {Tran, Brandon and Li, Jerry and Madry, Aleksander},
+  title     = {Spectral Signatures in Backdoor Attacks},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2018}
+}
+
+@inproceedings{chen2019activation,
+  author    = {Chen, Bryant and Carvalho, Wilka and Baracaldo, Nathalie and Ludwig, Heiko and Edwards, Benjamin and Lee, Taesung and Molloy, Ian and Srivastava, Biplav},
+  title     = {Detecting Backdoor Attacks on Deep Neural Networks by Activation Clustering},
+  booktitle = {AAAI Workshop on Artificial Intelligence Safety (SafeAI)},
+  year      = {2019}
+}
+
+@inproceedings{hayase2021spectre,
+  author    = {Hayase, Jonathan and Kong, Weihao and Somani, Raghav and Oh, Sewoong},
+  title     = {{SPECTRE}: Defending Against Backdoor Attacks Using Robust Statistics},
+  booktitle = {International Conference on Machine Learning (ICML)},
+  pages     = {4129--4139},
+  year      = {2021}
+}
+
+@inproceedings{tang2021scan,
+  author    = {Tang, Di and Wang, XiaoFeng and Tang, Haixu and Zhang, Kehuan},
+  title     = {Demon in the Variant: Statistical Analysis of {DNNs} for Robust Backdoor Contamination Detection},
+  booktitle = {30th USENIX Security Symposium},
+  pages     = {1541--1558},
+  year      = {2021}
+}
+
+@inproceedings{pan2023asset,
+  author    = {Pan, Minzhou and Zeng, Yi and Lyu, Lingjuan and Lin, Xue and Jia, Ruoxi},
+  title     = {{ASSET}: Robust Backdoor Data Detection Across a Multiplicity of Deep Learning Paradigms},
+  booktitle = {32nd USENIX Security Symposium},
+  year      = {2023}
+}
+
+@inproceedings{qi2023proactive,
+  author    = {Qi, Xiangyu and Xie, Tinghao and Wang, Jiachen T. and Wu, Tong and Mahloujifar, Saeed and Mittal, Prateek},
+  title     = {Towards a Proactive {ML} Approach for Detecting Backdoor Poison Samples},
+  booktitle = {32nd USENIX Security Symposium},
+  year      = {2023}
+}
+
+@article{hou2025flare,
+  author  = {Hou, Linshan and Luo, Wei and Hua, Zhongyun and Chen, Songhua and Zhang, Leo Yu and Li, Yiming},
+  title   = {{FLARE}: Towards Universal Dataset Purification against Backdoor Attacks},
+  journal = {IEEE Transactions on Information Forensics and Security},
+  year    = {2025}
+}
+
+@inproceedings{steinhardt2017certified,
+  author    = {Steinhardt, Jacob and Koh, Pang Wei and Liang, Percy},
+  title     = {Certified Defenses for Data Poisoning Attacks},
+  booktitle = {Advances in Neural Information Processing Systems (NIPS)},
+  year      = {2017}
+}
+
+@inproceedings{levine2021dpa,
+  author    = {Levine, Alexander and Feizi, Soheil},
+  title     = {Deep Partition Aggregation: Provable Defenses against General Poisoning Attacks},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2021}
+}
+
+% ===================================================================
+% Perceptual hashing
+% ===================================================================
+
+@inproceedings{venkatesan2000robust,
+  author    = {Venkatesan, Ramarathnam and Koon, S.-M. and Jakubowski, Mariusz H. and Moulin, Pierre},
+  title     = {Robust Image Hashing},
+  booktitle = {International Conference on Image Processing (ICIP)},
+  pages     = {664--666},
+  year      = {2000}
+}
+
+@article{swaminathan2006robust,
+  author  = {Swaminathan, Ashwin and Mao, Yinian and Wu, Min},
+  title   = {Robust and Secure Image Hashing},
+  journal = {IEEE Transactions on Information Forensics and Security},
+  volume  = {1},
+  number  = {2},
+  pages   = {215--230},
+  year    = {2006}
+}
+
+@article{monga2006perceptual,
+  author  = {Monga, Vishal and Evans, Brian L.},
+  title   = {Perceptual Image Hashing via Feature Points: Performance Evaluation and Tradeoffs},
+  journal = {IEEE Transactions on Image Processing},
+  volume  = {15},
+  number  = {11},
+  pages   = {3452--3465},
+  year    = {2006}
+}
+
+@inproceedings{yang2006blockmean,
+  author    = {Yang, Bian and Gu, Fan and Niu, Xiamu},
+  title     = {Block Mean Value Based Image Perceptual Hashing},
+  booktitle = {International Conference on Intelligent Information Hiding and Multimedia Signal Processing (IIH-MSP)},
+  pages     = {167--172},
+  year      = {2006}
+}
+
+@mastersthesis{zauner2010phash,
+  author = {Zauner, Christoph},
+  title  = {Implementation and Benchmarking of Perceptual Image Hash Functions},
+  school = {Upper Austria University of Applied Sciences, Hagenberg},
+  year   = {2010}
+}
+
+@article{farid2021overview,
+  author  = {Farid, Hany},
+  title   = {An Overview of Perceptual Hashing},
+  journal = {Journal of Online Trust and Safety},
+  volume  = {1},
+  number  = {1},
+  year    = {2021},
+  doi     = {10.54501/jots.v1i1.24}
+}
+
+@misc{meta2019pdq,
+  author       = {{Meta (Facebook)}},
+  title        = {{ThreatExchange}: The {PDQ} Image Similarity Algorithm},
+  howpublished = {Software / GitHub},
+  year         = {2019},
+  url          = {https://github.com/facebook/ThreatExchange/tree/main/pdq}
+}
+
+@misc{apple2021neuralhash,
+  author       = {{Apple Inc.}},
+  title        = {{CSAM} Detection: Technical Summary},
+  howpublished = {Technical report},
+  year         = {2021},
+  url          = {https://www.apple.com/child-safety/pdf/CSAM_Detection_Technical_Summary.pdf}
+}
+
+@article{ahmed1974dct,
+  author  = {Ahmed, Nasir and Natarajan, T. and Rao, K. R.},
+  title   = {Discrete Cosine Transform},
+  journal = {IEEE Transactions on Computers},
+  volume  = {C-23},
+  number  = {1},
+  pages   = {90--93},
+  year    = {1974}
+}
+
+@article{mallat1989wavelet,
+  author  = {Mallat, Stephane G.},
+  title   = {A Theory for Multiresolution Signal Decomposition: The Wavelet Representation},
+  journal = {IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  volume  = {11},
+  number  = {7},
+  pages   = {674--693},
+  year    = {1989}
+}
+
+@article{marr1980edge,
+  author  = {Marr, David and Hildreth, Ellen},
+  title   = {Theory of Edge Detection},
+  journal = {Proceedings of the Royal Society of London. Series B, Biological Sciences},
+  volume  = {207},
+  number  = {1167},
+  pages   = {187--217},
+  year    = {1980}
+}
+
+@inproceedings{hao2021notwhat,
+  author    = {Hao, Qingying and Luo, Licheng and Jan, Steve T. K. and Wang, Gang},
+  title     = {It's Not What It Looks Like: Manipulating Perceptual Hashing Based Applications},
+  booktitle = {ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  pages     = {69--85},
+  year      = {2021}
+}
+
+@inproceedings{struppek2022neuralhash,
+  author    = {Struppek, Lukas and Hintersdorf, Dominik and Neider, Daniel and Kersting, Kristian},
+  title     = {Learning to Break Deep Perceptual Hashing: The Use Case {NeuralHash}},
+  booktitle = {ACM Conference on Fairness, Accountability, and Transparency (FAccT)},
+  pages     = {58--69},
+  year      = {2022}
+}
+
+@inproceedings{jain2022adversarial,
+  author    = {Jain, Shubham and Cre{\c{t}}u, Ana-Maria and de Montjoye, Yves-Alexandre},
+  title     = {Adversarial Detection Avoidance Attacks: Evaluating the Robustness of Perceptual Hashing-Based Client-Side Scanning},
+  booktitle = {31st USENIX Security Symposium},
+  pages     = {2317--2334},
+  year      = {2022}
+}
+
+@inproceedings{prokos2023squint,
+  author    = {Prokos, Jonathan and Fendley, Neil and Green, Matthew and Schuster, Roei and Tromer, Eran and Jois, Tushar and Cao, Yinzhi},
+  title     = {Squint Hard Enough: Attacking Perceptual Hashing with Adversarial Machine Learning},
+  booktitle = {32nd USENIX Security Symposium},
+  year      = {2023}
+}
+
+@article{abelson2024bugs,
+  author  = {Abelson, Hal and Anderson, Ross and Bellovin, Steven M. and Benaloh, Josh and Blaze, Matt and others},
+  title   = {Bugs in Our Pockets: The Risks of Client-Side Scanning},
+  journal = {Journal of Cybersecurity},
+  volume  = {10},
+  number  = {1},
+  year    = {2024}
+}
+
+@inproceedings{kulshrestha2021identifying,
+  author    = {Kulshrestha, Anunay and Mayer, Jonathan},
+  title     = {Identifying Harmful Media in End-to-End Encrypted Communication: Efficient Private Membership Computation},
+  booktitle = {30th USENIX Security Symposium},
+  pages     = {893--910},
+  year      = {2021}
+}
+
+@article{barz2020cifair,
+  author  = {Barz, Bj{\"o}rn and Denzler, Joachim},
+  title   = {Do We Train on Test Data? {Purging} {CIFAR} of Near-Duplicates},
+  journal = {Journal of Imaging},
+  volume  = {6},
+  number  = {6},
+  pages   = {41},
+  year    = {2020}
+}
+
+% ===================================================================
+% Secure multi-party computation
+% ===================================================================
+
+@inproceedings{yao1986generate,
+  author    = {Yao, Andrew Chi-Chih},
+  title     = {How to Generate and Exchange Secrets},
+  booktitle = {27th Annual Symposium on Foundations of Computer Science (FOCS)},
+  pages     = {162--167},
+  year      = {1986}
+}
+
+@inproceedings{goldreich1987play,
+  author    = {Goldreich, Oded and Micali, Silvio and Wigderson, Avi},
+  title     = {How to Play any Mental Game},
+  booktitle = {19th Annual ACM Symposium on Theory of Computing (STOC)},
+  pages     = {218--229},
+  year      = {1987}
+}
+
+@inproceedings{benor1988completeness,
+  author    = {Ben-Or, Michael and Goldwasser, Shafi and Wigderson, Avi},
+  title     = {Completeness Theorems for Non-Cryptographic Fault-Tolerant Distributed Computation},
+  booktitle = {20th Annual ACM Symposium on Theory of Computing (STOC)},
+  pages     = {1--10},
+  year      = {1988}
+}
+
+@article{shamir1979share,
+  author  = {Shamir, Adi},
+  title   = {How to Share a Secret},
+  journal = {Communications of the ACM},
+  volume  = {22},
+  number  = {11},
+  pages   = {612--613},
+  year    = {1979}
+}
+
+@inproceedings{beaver1991efficient,
+  author    = {Beaver, Donald},
+  title     = {Efficient Multiparty Protocols Using Circuit Randomization},
+  booktitle = {Advances in Cryptology -- CRYPTO '91},
+  pages     = {420--432},
+  year      = {1991}
+}
+
+@inproceedings{araki2016highthroughput,
+  author    = {Araki, Toshinori and Furukawa, Jun and Lindell, Yehuda and Nof, Ariel and Ohara, Kazuma},
+  title     = {High-Throughput Semi-Honest Secure Three-Party Computation with an Honest Majority},
+  booktitle = {ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  pages     = {805--817},
+  year      = {2016}
+}
+
+@inproceedings{mohassel2018aby3,
+  author    = {Mohassel, Payman and Rindal, Peter},
+  title     = {{ABY3}: A Mixed Protocol Framework for Machine Learning},
+  booktitle = {ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  pages     = {35--52},
+  year      = {2018}
+}
+
+@inproceedings{damgard2012spdz,
+  author    = {Damg{\aa}rd, Ivan and Pastro, Valerio and Smart, Nigel and Zakarias, Sarah},
+  title     = {Multiparty Computation from Somewhat Homomorphic Encryption},
+  booktitle = {Advances in Cryptology -- CRYPTO 2012},
+  pages     = {643--662},
+  year      = {2012}
+}
+
+@inproceedings{cramer2018spdz2k,
+  author    = {Cramer, Ronald and Damg{\aa}rd, Ivan and Escudero, Daniel and Scholl, Peter and Xing, Chaoping},
+  title     = {{SPD$\mathbb{Z}_{2^k}$}: Efficient {MPC} mod $2^k$ for Dishonest Majority},
+  booktitle = {Advances in Cryptology -- CRYPTO 2018},
+  pages     = {769--798},
+  year      = {2018}
+}
+
+@inproceedings{demmler2015aby,
+  author    = {Demmler, Daniel and Schneider, Thomas and Zohner, Michael},
+  title     = {{ABY} -- A Framework for Efficient Mixed-Protocol Secure Two-Party Computation},
+  booktitle = {Network and Distributed System Security Symposium (NDSS)},
+  year      = {2015}
+}
+
+@inproceedings{mohassel2017secureml,
+  author    = {Mohassel, Payman and Zhang, Yupeng},
+  title     = {{SecureML}: A System for Scalable Privacy-Preserving Machine Learning},
+  booktitle = {IEEE Symposium on Security and Privacy (S\&P)},
+  pages     = {19--38},
+  year      = {2017}
+}
+
+@article{wagh2019securenn,
+  author  = {Wagh, Sameer and Gupta, Divya and Chandran, Nishanth},
+  title   = {{SecureNN}: 3-Party Secure Computation for Neural Network Training},
+  journal = {Proceedings on Privacy Enhancing Technologies},
+  volume  = {2019},
+  number  = {3},
+  pages   = {26--49},
+  year    = {2019}
+}
+
+@article{wagh2021falcon,
+  author  = {Wagh, Sameer and Tople, Shruti and Benhamouda, Fabrice and Kushilevitz, Eyal and Mittal, Prateek and Rabin, Tal},
+  title   = {Falcon: Honest-Majority Maliciously Secure Framework for Private Deep Learning},
+  journal = {Proceedings on Privacy Enhancing Technologies},
+  volume  = {2021},
+  number  = {1},
+  pages   = {188--208},
+  year    = {2021}
+}
+
+@inproceedings{knott2021crypten,
+  author    = {Knott, Brian and Venkataraman, Shobha and Hannun, Awni and Sengupta, Shubho and Ibrahim, Mark and van der Maaten, Laurens},
+  title     = {{CrypTen}: Secure Multi-Party Computation Meets Machine Learning},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS)},
+  year      = {2021}
+}
+
+@inproceedings{keller2020mpspdz,
+  author    = {Keller, Marcel},
+  title     = {{MP-SPDZ}: A Versatile Framework for Multi-Party Computation},
+  booktitle = {ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  pages     = {1575--1590},
+  year      = {2020}
+}
+
+@inproceedings{escudero2020edabits,
+  author    = {Escudero, Daniel and Ghosh, Satrajit and Keller, Marcel and Rachuri, Rahul and Scholl, Peter},
+  title     = {Improved Primitives for {MPC} over Mixed Arithmetic-Binary Circuits},
+  booktitle = {Advances in Cryptology -- CRYPTO 2020},
+  pages     = {823--852},
+  year      = {2020}
+}
+
+@inproceedings{damgard2006constantrounds,
+  author    = {Damg{\aa}rd, Ivan and Fitzi, Matthias and Kiltz, Eike and Nielsen, Jesper Buus and Toft, Tomas},
+  title     = {Unconditionally Secure Constant-Rounds Multi-party Computation for Equality, Comparison, Bits and Exponentiation},
+  booktitle = {Theory of Cryptography Conference (TCC)},
+  pages     = {285--304},
+  year      = {2006}
+}
+
+@inproceedings{catrina2010primitives,
+  author    = {Catrina, Octavian and de Hoogh, Sebastiaan},
+  title     = {Improved Primitives for Secure Multiparty Integer Computation},
+  booktitle = {Security and Cryptography for Networks (SCN)},
+  pages     = {182--199},
+  year      = {2010}
+}
+
+@inproceedings{catrina2010fixedpoint,
+  author    = {Catrina, Octavian and Saxena, Amitabh},
+  title     = {Secure Computation with Fixed-Point Numbers},
+  booktitle = {Financial Cryptography and Data Security (FC)},
+  pages     = {35--50},
+  year      = {2010}
+}
+
+@article{kogge1973parallel,
+  author  = {Kogge, Peter M. and Stone, Harold S.},
+  title   = {A Parallel Algorithm for the Efficient Solution of a General Class of Recurrence Equations},
+  journal = {IEEE Transactions on Computers},
+  volume  = {C-22},
+  number  = {8},
+  pages   = {786--793},
+  year    = {1973}
+}
+
+@inproceedings{batcher1968sorting,
+  author    = {Batcher, Kenneth E.},
+  title     = {Sorting Networks and Their Applications},
+  booktitle = {AFIPS Spring Joint Computer Conference},
+  pages     = {307--314},
+  year      = {1968}
+}
+
+@inproceedings{hamada2012sorting,
+  author    = {Hamada, Koki and Kikuchi, Ryo and Ikarashi, Dai and Chida, Koji and Takahashi, Katsumi},
+  title     = {Practically Efficient Multi-party Sorting Protocols from Comparison Sort Algorithms},
+  booktitle = {Information Security and Cryptology (ICISC)},
+  pages     = {202--216},
+  year      = {2012}
+}
+
+@article{mohassel2020kmeans,
+  author  = {Mohassel, Payman and Rosulek, Mike and Trieu, Ni},
+  title   = {Practical Privacy-Preserving K-means Clustering},
+  journal = {Proceedings on Privacy Enhancing Technologies},
+  volume  = {2020},
+  number  = {4},
+  pages   = {414--433},
+  year    = {2020}
+}
+
+@article{kaissis2021endtoend,
+  author  = {Kaissis, Georgios and Ziller, Alexander and Passerat-Palmbach, Jonathan and Ryffel, Th{\'e}o and Usynin, Dmitrii and others},
+  title   = {End-to-End Privacy Preserving Deep Learning on Multi-Institutional Medical Imaging},
+  journal = {Nature Machine Intelligence},
+  volume  = {3},
+  number  = {6},
+  pages   = {473--484},
+  year    = {2021}
+}
+
+% ===================================================================
+% Poisoning in privacy-preserving and federated learning
+% ===================================================================
+
+@inproceedings{bagdasaryan2020backdoorfl,
+  author    = {Bagdasaryan, Eugene and Veit, Andreas and Hua, Yiqing and Estrin, Deborah and Shmatikov, Vitaly},
+  title     = {How To Backdoor Federated Learning},
+  booktitle = {International Conference on Artificial Intelligence and Statistics (AISTATS)},
+  pages     = {2938--2948},
+  year      = {2020}
+}
+
+@inproceedings{bonawitz2017secagg,
+  author    = {Bonawitz, Keith and Ivanov, Vladimir and Kreuter, Ben and Marcedone, Antonio and McMahan, H. Brendan and Patel, Sarvar and Ramage, Daniel and Segal, Aaron and Seth, Karn},
+  title     = {Practical Secure Aggregation for Privacy-Preserving Machine Learning},
+  booktitle = {ACM SIGSAC Conference on Computer and Communications Security (CCS)},
+  pages     = {1175--1191},
+  year      = {2017}
+}
+
+@article{so2021brea,
+  author  = {So, Jinhyun and G{\"u}ler, Ba{\c{s}}ak and Avestimehr, A. Salman},
+  title   = {Byzantine-Resilient Secure Federated Learning},
+  journal = {IEEE Journal on Selected Areas in Communications},
+  volume  = {39},
+  number  = {7},
+  pages   = {2168--2181},
+  year    = {2021}
+}
+
+@inproceedings{nguyen2022flame,
+  author    = {Nguyen, Thien Duc and Rieger, Phillip and Chen, Huili and Yalame, Hossein and M{\"o}llering, Helen and others},
+  title     = {{FLAME}: Taming Backdoors in Federated Learning},
+  booktitle = {31st USENIX Security Symposium},
+  pages     = {1415--1432},
+  year      = {2022}
+}
+
+@inproceedings{lycklama2023rofl,
+  author    = {Lycklama, Hidde and Burkhalter, Lukas and Viand, Alexander and K{\"u}chler, Nicolas and Hithnawi, Anwar},
+  title     = {{RoFL}: Robustness of Secure Federated Learning},
+  booktitle = {IEEE Symposium on Security and Privacy (S\&P)},
+  pages     = {453--476},
+  year      = {2023}
+}
+
+@inproceedings{rathee2023elsa,
+  author    = {Rathee, Mayank and Shen, Conghao and Wagh, Sameer and Popa, Raluca Ada},
+  title     = {{ELSA}: Secure Aggregation for Federated Learning with Malicious Actors},
+  booktitle = {IEEE Symposium on Security and Privacy (S\&P)},
+  pages     = {1961--1979},
+  year      = {2023}
+}
+
+@inproceedings{corrigangibbs2017prio,
+  author    = {Corrigan-Gibbs, Henry and Boneh, Dan},
+  title     = {Prio: Private, Robust, and Scalable Computation of Aggregate Statistics},
+  booktitle = {14th USENIX Symposium on Networked Systems Design and Implementation (NSDI)},
+  pages     = {259--282},
+  year      = {2017}
+}
+
+@inproceedings{chaudhari2023safenet,
+  author    = {Chaudhari, Harsh and Jagielski, Matthew and Oprea, Alina},
+  title     = {{SafeNet}: The Unreasonable Effectiveness of Ensembles in Private Collaborative Learning},
+  booktitle = {IEEE Conference on Secure and Trustworthy Machine Learning (SaTML)},
+  pages     = {176--196},
+  year      = {2023}
+}
+
+% ===================================================================
+% Datasets, models and evaluation
+% ===================================================================
+
+@techreport{krizhevsky2009cifar,
+  author      = {Krizhevsky, Alex},
+  title       = {Learning Multiple Layers of Features from Tiny Images},
+  institution = {University of Toronto},
+  year        = {2009}
+}
+
+@inproceedings{he2016resnet,
+  author    = {He, Kaiming and Zhang, Xiangyu and Ren, Shaoqing and Sun, Jian},
+  title     = {Deep Residual Learning for Image Recognition},
+  booktitle = {IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  pages     = {770--778},
+  year      = {2016}
+}
+
+@article{fawcett2006roc,
+  author  = {Fawcett, Tom},
+  title   = {An Introduction to {ROC} Analysis},
+  journal = {Pattern Recognition Letters},
+  volume  = {27},
+  number  = {8},
+  pages   = {861--874},
+  year    = {2006}
 }

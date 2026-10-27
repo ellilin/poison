@@ -1,112 +1,266 @@
 \chapter{Introduction}
 \label{chap:intro}
-\chaptermark{Optional running chapter heading}
-\section{Spacing \& Type}
-\label{sec:section}
 
-This is a section. This is a citation without brackets. and this is one with brackets \cite{A}. Multiple \cite{A,B,C} Here's a reference to a subsection: \ref{sec:subsection}. Citation of an online article \cite{D}. Citation of an online proceeding \cite{F}. The body of the text and abstract must be double-spaced except for footnotes or long quotations. Fonts such as Times Roman, Bookman, New Century Schoolbook, Garamond, Palatine, and Courier are acceptable and commonly found on most computers. The same type must be used throughout the body of the text. The font size must be 10 point or larger and footnotes\footnote{This is a footnote.} must be two sizes smaller than the text\footnote{This is another footnote.} but no smaller than eight points. Chapter, section, or other headings should be of a consistent font and size throughout the ETD, as should labels for illustrations, charts, and figures.
+Machine learning models are only as trustworthy as the data they are trained
+on. Modern image classifiers learn from hundreds of thousands to billions of
+samples collected from the web, from crowd workers or from several institutions
+at once, and no single party is able to inspect every sample. The training set
+has therefore become an attack surface. In a \emph{data poisoning} attack, an
+adversary who controls a small fraction of the training data manipulates the
+behaviour of every model that is later trained on
+it~\cite{biggio2012poisoning,goldblum2023dataset}. This thesis studies a defense
+against the most practical form of such attacks, backdoor poisoning, in the
+setting where defending against it is hardest: when the training data is
+confidential and can only be processed inside secure multi-party computation
+(MPC).
 
-\subsection{Creating a Subsection}
-\label{sec:subsection}
+\section{Background and Motivation}
+\label{sec:intro-background}
 
-\subsubsection{Creating a Subsubsection}
-\subsubsection{Creating a Subsubsection}
-\subsubsection{Creating a Subsubsection}
+In a backdoor attack, the adversary adds a \emph{trigger} to a few percent of
+the training images and relabels them to a target class of their choice. The
+trigger can be a small visible patch~\cite{gu2019badnets}, a faint pattern
+blended into the whole image~\cite{chen2017blended} or an imperceptible
+geometric warping~\cite{nguyen2021wanet}. A model trained on the poisoned set
+behaves normally on clean inputs, so its accuracy on a held-out test set barely
+changes, but it predicts the target class whenever the trigger is present.
+Because standard validation metrics do not reveal the backdoor, it can stay
+unnoticed until the adversary activates it. Backdoor learning has grown into a
+research field of its own~\cite{li2024backdoorsurvey}, while interviews with
+28 organisations revealed that industry practitioners lack the tools to
+protect, detect and respond to attacks on their machine learning
+systems~\cite{kumar2020industry}. The threat is also practical
+at scale: Carlini \emph{et al.}~\cite{carlini2024webscale} showed that an
+attacker could have poisoned 0.01\% of two popular web-scale image--text
+datasets for about 60~USD by purchasing expired domains referenced by the
+datasets.
 
-\paragraph{This is a heading level below subsubsection}
+The data that is most valuable for training is often the data that cannot be
+shared. Hospitals, banks and insurers hold medical images, transactions and
+claims that privacy regulation and commercial confidentiality forbid them to
+pool in the clear. Secure multi-party computation resolves this conflict: it
+allows several parties to compute a function of their joint data so that no
+party learns anything beyond the output~\cite{yao1986generate,goldreich1987play,benor1988completeness}.
+Over the last decade, MPC protocols for machine learning have progressed from
+linear models to the training of convolutional neural
+networks~\cite{mohassel2017secureml,mohassel2018aby3,wagh2021falcon,knott2021crypten},
+and privacy-preserving deep learning on multi-institutional medical data has
+been demonstrated end-to-end~\cite{kaissis2021endtoend}.
 
-And this is a quote: 
-%
-\begin{quote}
-\blindtext
-\end{quote}
+MPC, however, protects the confidentiality of the inputs and the correctness of
+the computation, not the honesty of the inputs. A member of a data consortium
+can contribute poisoned samples just as easily as a web page can, and since the
+data is secret-shared, nobody, including the other data owners, can look at it.
+Encryption thus removes the last line of defense, namely inspection of the
+training data, while leaving the attack surface intact. A poisoning defense for
+this setting has to run inside MPC itself, and its cost has to be affordable
+there.
 
-\begin{figure}[hbt]
+\section{Problem Statement}
+\label{sec:intro-problem}
+
+The strongest dataset purification defenses search for poisoned samples in the
+feature space of a neural network that has been trained on the poisoned data.
+Spectral Signatures~\cite{tran2018spectral} projects the features onto their
+top singular vector, Activation Clustering~\cite{chen2019activation} runs
+2-means on them, and later methods replace these statistics with robust
+covariance estimation~\cite{hayase2021spectre} or an EM
+decomposition~\cite{tang2021scan}. Translated into MPC, every one of these
+defenses first requires training a deep network on secret-shared data, which is
+the most expensive computation one can ask an MPC engine to perform. Their
+statistics then rely on singular value decomposition, $k$-means clustering,
+$k$-nearest neighbours and sorting. These operations consist of data-dependent
+comparisons and iterations, which are the most expensive primitives of secret
+sharing~\cite{hamada2012sorting,mohassel2020kmeans}. State-of-the-art
+purification is therefore impractical exactly where inspection of the data is
+impossible and a defense is needed most. Moreover, Qi
+\emph{et al.}~\cite{qi2023revisiting} have demonstrated that adaptive attacks can
+break the latent separability assumption on which these defenses rest.
+
+Perceptual hash functions offer a different trade-off. A perceptual hash maps
+an image to a short bit string so that visually similar images obtain similar
+strings~\cite{zauner2010phash,farid2021overview}. Most classical constructions
+apply a fixed linear transform, such as resizing, a discrete cosine transform or
+a wavelet transform, and then binarise the resulting coefficients. Under linear
+secret sharing, a public linear map is computed locally by every party without
+any communication, so only the binarisation step costs interaction. Perceptual
+hashes are therefore a natural candidate for a cheap, model-free summary of
+training images inside MPC.
+
+So far, however, perceptual hashes have entered machine learning security only
+as the target of evasion and collision
+attacks~\cite{struppek2022neuralhash,jain2022adversarial,prokos2023squint} and
+have never been studied as a filter for poisoned training data. There is also a
+conceptual tension in such a use: a perceptual hash is designed to be invariant
+to small perturbations, and an invisible trigger is precisely a small
+perturbation. Three questions therefore remain open: 1)~whether the few
+hundred bits that survive a perceptual hash carry enough information to
+separate poisoned samples from clean ones; 2)~which kinds of triggers survive
+the hash and which are erased by it; and 3)~how much a hash-based defense costs
+inside MPC compared with model-based defenses. These unknowns constitute the
+research gap that this thesis addresses.
+
+\section{Research Questions and Hypotheses}
+\label{sec:intro-rq}
+
+The purpose of this thesis is to determine whether perceptual hash functions
+can serve as a model-free defense against backdoor poisoning that is affordable
+under MPC. The study addresses three research questions:
+\begin{enumerate}[label=\textbf{RQ\arabic*}, leftmargin=*]
+  \item How effective are perceptual hash functions, combined with detection
+    statistics computed on their bits, at removing samples poisoned by
+    state-of-the-art backdoor attacks?
+  \item Which properties of a trigger determine whether it can be detected from
+    per-sample hash bits?
+  \item What is the communication and round cost of hash-based dataset
+    purification under secret-sharing MPC protocols, and how does it compare
+    with the cost of model-based purification defenses?
+\end{enumerate}
+
+Table~\ref{tab:intro-hypotheses} states the hypothesis that corresponds to each
+research question, together with its independent and dependent variables. The
+population in all three cases is a training set of natural images in which a
+fraction of the samples has been poisoned by a backdoor attack.
+
+\begin{table}[htbp]
 \centering
-\includegraphics[]{figs/images.png}
-\caption{One kernel at $x_s$ (\emph{dotted kernel}) or two kernels at
-$x_i$ and $x_j$ (\textit{left and right}) lead to the same summed estimate
-at $x_s$. This shows a figure consisting of different types of
-lines. Elements of the figure described in the caption should be set in
-italics, in parentheses, as shown in this sample caption.}
-\label{fig:example}
-\end{figure}
+\caption{Research Questions, Hypotheses and Variables of the Study}
+\label{tab:intro-hypotheses}
+\setstretch{1.0}
+\small
+\begin{tabular}{>{\raggedright\arraybackslash}p{0.07\textwidth} >{\raggedright\arraybackslash}p{0.47\textwidth} >{\raggedright\arraybackslash}p{0.18\textwidth} >{\raggedright\arraybackslash}p{0.18\textwidth}}
+\toprule
+\textbf{RQ} & \textbf{Hypothesis} & \textbf{Independent variable} & \textbf{Dependent variable} \\
+\midrule
+RQ1 & Classical perceptual hashes detect visible patch triggers but not
+invisible ones; a hash that binarises the high-frequency residual discarded by
+a perceptual hash detects invisible sample-agnostic triggers with a detection
+AUC above that of a label-flip-only control.
+& hash family, attack & detection AUC, share of poison removed, attack success rate \\
+\midrule
+RQ2 & A trigger that is identical in every poisoned sample is detectable from
+hash bits, whereas a trigger that differs from sample to sample cannot be
+detected by any statistic of per-sample hash bits.
+& trigger locality & detection AUC \\
+\midrule
+RQ3 & Because the arithmetic of a perceptual hash is a public linear map, the
+cost of hash-based purification under MPC is several orders of magnitude lower
+than that of a defense that requires a trained model.
+& defense type, binarisation rule & communication volume, rounds, time \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-This is a table:
-% currsize is not set in the long table environment, so we need to set it before we set it up.
-\makeatletter
-\let\@currsize\normalsize
-\makeatother
+To answer these questions, the thesis pursues the following objectives:
+\begin{enumerate}[label=\arabic*)]
+  \item to express classical perceptual hashes in a common form, a binarisation
+    of a public linear map, and to validate them against reference
+    implementations;
+  \item to design a family of hashes that targets the high-frequency component
+    of an image, where invisible triggers reside, at the same MPC cost as a
+    classical hash;
+  \item to develop model-free detection statistics and threshold rules that
+    operate on hash bits alone;
+  \item to evaluate the resulting defense against standard and adaptive
+    backdoor attacks, both on the level of detection and on the level of a model
+    trained on the purified data;
+  \item to estimate the cost of every hash and of the complete purification
+    pipeline under three-party and two-party MPC protocols and to compare it
+    with model-based defenses;
+  \item to release the defense as a module of an open-source backdoor learning
+    toolbox.
+\end{enumerate}
 
-% tabular environments are set to be single-spaced in the  thesis class,  but long tables do not use tabular
-% to get around this, set the spacing to single spacing at the start of the long table environment, and set it back to double-spacing at the end of it
+\section{Research Approach}
+\label{sec:intro-approach}
 
-\begin{longtable}{c|c|c}
-\caption[This is the title I want to appear in the List of Tables]{This Is a Table Example} \label{tab:pfams} \\
-\hline
-A & B & C \\
-\hline
-\endfirsthead
-\multicolumn{3}{@{}l}{} \\
-\hline
-A & B & C\\
-\hline
-\endhead
-a1 & b1 & c1 \\
-a2 & b2 & c2\\
-a3 & b3 & c3\\
-a4 & b4 & c4\\
-\hline
-\end{longtable}
+The study adopts a strict threat model. The adversary is poison-only: they
+modify a part of the training set, cannot influence the training procedure and
+know the defense, including the hash functions and the detection statistic. The
+defender sees only the secret-shared training set; they have no clean held-out
+data, no trained model and no knowledge of the trigger, the target class or the
+poisoning rate. This is the only setting in which the cost of a defense does
+not depend on training a model, and therefore the only one in which a
+deployment inside MPC is plausible.
 
-The package ``upgreek'' allows us to use non-italicized lower-case greek letters. See for yourself: $\upbeta$, $\bm\upbeta$, $\beta$, $\bm\beta$. Next is a numbered equation:
-\begin{align}
-\label{eq:name}
-\|\bm{X}\|_{2,1}={\underbrace{\sum_{j=1}^nf_j(\bm{X})}_{\text{convex}}}=\sum_{j=1}^n\|\bm{X}_{.,j}\|_2
-\end{align}
-The reference to equation (\ref{eq:name}) is clickable. 
-\section[Theorems, Corollaries, Lemmas, Proofs, Remarks, Definitions and Examples]{Theorems, Corollaries, Lemmas, Proofs, Remarks, Definitions,and Examples}
+The research combines analytical and experimental methods. On the analytical
+side, every hash is written as $\mathrm{binarise}(Lx)$ with a public matrix $L$,
+which makes it possible to reason about which triggers a hash can see and to
+derive its MPC cost from the binarisation rule alone. On the experimental side,
+26 hash functions and seven detection statistics are evaluated on the CIFAR-10
+dataset~\cite{krizhevsky2009cifar} against 13 poisoning attacks, eight of
+which are taken from the BackdoorBox toolbox~\cite{li2023backdoorbox}. A
+label-flip-only control, which relabels samples without adding any trigger,
+separates genuine trigger detection from the detection of label noise. The
+effect of purification on the trained model is measured with a
+ResNet-18~\cite{he2016resnet} through its benign accuracy and attack success
+rate. Finally, every hash is executed on an instrumented fixed-point
+secret-sharing type, checked bit by bit against its plaintext version, and its
+communication primitives are counted and priced under a three-party replicated
+protocol~\cite{araki2016highthroughput,mohassel2018aby3} and a two-party
+SPDZ-style protocol~\cite{damgard2012spdz,cramer2018spdz2k}.
 
-\begin{theorem}
-\label{thm:onlytheorem}
-\blindtext
-\end{theorem}
+\section{Contributions}
+\label{sec:intro-contributions}
 
-\begin{proof}
-I'm a (very short) proof.
-\end{proof}
+The novelty of the thesis lies in the following contributions.
+\begin{enumerate}[label=\arabic*)]
+  \item The thesis presents the first systematic study of perceptual hash
+    functions as a defense against training-data poisoning.
+  \item It shows that every classical perceptual hash except the colour hash can be
+    written as a binarisation of a public linear map, so that the MPC cost of a
+    hash is determined by its binarisation rule alone, and it derives cheaper
+    binarisation rules with the same detection power.
+  \item It proposes a family of residual hashes, a perceptual complement that
+    binarises exactly the high-frequency component a perceptual hash discards,
+    within the same MPC cost class.
+  \item It characterises theoretically which triggers can be detected from hash
+    bits: invariance of a hash implies blindness to triggers in its null space,
+    and sample-specific triggers are undetectable from per-sample summaries.
+  \item It introduces an evaluation protocol with a label-flip-only control and
+    shows that the number of poisoned samples that survive purification, rather
+    than the share of poison removed, determines whether a backdoor survives.
+  \item It provides an open-source implementation, including an MPC cost tracer
+    and an integration into BackdoorBox.
+\end{enumerate}
 
-\begin{lemma}
-I'm a lemma.
-\end{lemma}
+\section{Main Results}
+\label{sec:intro-results}
 
-\begin{corollary}
-I include a reference to Thm. \ref{thm:onlytheorem}.
-\end{corollary}
+The study found that classical perceptual hashes are largely ineffective as a
+poisoning defense. Only the hashes based on the discrete cosine transform
+detected fixed patch triggers, while all classical hashes were blind to
+invisible triggers, as their invariance predicts. The proposed residual hashes,
+in contrast, detected every sample-agnostic trigger that was tested, including
+invisible blended, steganographic and adaptive triggers, and removed 64--100\%
+of the poisoned samples at the cost of 1--14\% of the clean data. As
+hypothesised, no hash detected sample-specific triggers such as WaNet and
+Refool. On a trained ResNet-18, purification reduced the attack success rate
+from 1.00 to 0.00 for the adaptive attack and from 1.00 to 0.15 for the blended
+attack, while benign accuracy stayed within 1.2 percentage points of the
+undefended model. For BadNets, however, removing 64\% of the poison left 906
+poisoned samples in the training set, and the backdoor survived unchanged.
 
-\begin{proposition}
-I'm a proposition.
-\end{proposition}
+Under MPC, the linear part of every hash was indeed free. Purifying the
+50\,000 images of the CIFAR-10 training set required about 29~GB of
+communication and 78~s on a local network under the three-party protocol, which
+is about $2\cdot10^{9}$ times less than a model-based defense and 326 times less
+than $k$-nearest neighbours in pixel space. These results suggest that
+perceptual hashing provides a cheap, model-free filter that eliminates
+sample-agnostic poison-only backdoors and forces the adversary into the
+sample-specific regime, provided that the filter is tuned for near-total recall.
 
-\begin{remark}
-I'm a remark. 
-\end{remark}
+\section{Thesis Outline}
+\label{sec:intro-outline}
 
-\begin{definition}
-I'm a definition. I'm a definition. I'm a definition. I'm a definition. I'm a definition. I'm a definition. I'm a definition. I'm a definition. I'm a definition. I'm a definition. I'm a definition. 
-\end{definition}
-
-\begin{example}
-I'm an example.
-\end{example}
-
-
-\section[Optional table of contents heading]{Section with\\ linebreaks in\\the
-name}
-
-
-\Blindtext[2]
-
-
-
-
+The remainder of the thesis is organised as follows.
+Chapter~\ref{chap:lr} reviews the literature on backdoor attacks and defenses,
+perceptual hashing and secure multi-party computation for machine learning, and
+identifies the gap that this work fills. Chapter~\ref{chap:met} sets out the
+methodology: the threat model, the normal form of a perceptual hash, the
+residual hash family, the detection statistics and threshold rules, and the MPC
+cost model. Chapter~\ref{chap:impl} describes the implementation of the hash
+library, the poisoned datasets, the secret-sharing tracer and the BackdoorBox
+module. Chapter~\ref{chap:eval} presents and discusses the experimental results,
+including their limitations. Chapter~\ref{chap:conclusion} concludes the thesis
+and outlines directions for future work.
