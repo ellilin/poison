@@ -86,6 +86,8 @@
 \DeclareCaptionLabelSeparator{figSep}{.\quad}
 \captionsetup[figure]{labelfont={normalfont}, name={Fig.}, labelsep=period}
 \counterwithin{figure}{chapter}
+\counterwithout{table}{chapter}
+\renewcommand{\thetable}{\Roman{table}}
 
 % \usepackage{titlesec}
 % \titleformat{\section}[hang]{\fontsize{20}{24}\selectfont\filcenter}{\Roman{section}}{1em}{}
